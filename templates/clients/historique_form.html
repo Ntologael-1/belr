@@ -1,0 +1,1519 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load humanize %}  
+
+{% block title %}Dashboard Graphique | BEL'R{% endblock %}
+
+
+{% block page_title %}
+<i class="fas fa-history me-2"></i>Ajouter une visite
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+<li class="breadcrumb-item"><a href="{% url 'clients_list' %}">Clients</a></li>
+<li class="breadcrumb-item"><a href="{% url 'client_detail' client.pk %}">{{ client.nom_complet }}</a></li>
+<li class="breadcrumb-item active">Nouvelle visite</li>
+{% endblock %}
+
+
+
+{% block content %}
+<div class="container-fluid py-4 dashboard-graph-page">
+
+    <!-- ========================= -->
+    <!-- HEADER -->
+    <!-- ========================= -->
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <div class="hero-icon">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div>
+                    <h2 class="page-title mb-0">Dashboard Graphique BI</h2>
+                    <p class="page-subtitle mb-0">
+                        Analyse visuelle des performances du salon BEL'R
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTRE PERIODE -->
+        <div class="filter-card">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-6 col-md-auto">
+                    <label class="form-label small text-muted fw-semibold mb-1">Mois</label>
+                    <select name="month" class="form-select premium-select">
+                        {% for month_num, month_name in months %}
+                            <option value="{{ month_num }}" {% if month_num == selected_month %}selected{% endif %}>
+                                {{ month_name|capfirst }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-auto">
+                    <label class="form-label small text-muted fw-semibold mb-1">Année</label>
+                    <input type="number" name="year" value="{{ selected_year }}" class="form-control premium-input" min="2020" max="2100">
+                </div>
+                <div class="col-12 col-md-auto">
+                    <button type="submit" class="btn btn-gradient-primary w-100">
+                        <i class="fas fa-filter me-2"></i>Filtrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- KPI CARDS -->
+    <!-- ========================= -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="kpi-card kpi-primary">
+                <div class="kpi-top">
+                    <div class="kpi-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <span class="kpi-badge">CA</span>
+                </div>
+                <div class="kpi-value">{{ ca_total|floatformat:0|intcomma }} FCFA</div>
+                <div class="kpi-label">Chiffre d'affaires total</div>
+                <div class="kpi-foot">
+                    <span><i class="fas fa-layer-group me-1"></i>{{ total_paiements }} paiements</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="kpi-card kpi-success">
+                <div class="kpi-top">
+                    <div class="kpi-icon">
+                        <i class="fas fa-shopping-basket"></i>
+                    </div>
+                    <span class="kpi-badge">Panier</span>
+                </div>
+                <div class="kpi-value">{{ panier_moyen_global|floatformat:0|intcomma }} FCFA</div>
+                <div class="kpi-label">Panier moyen global</div>
+                <div class="kpi-foot">
+                    <span><i class="fas fa-receipt me-1"></i>{{ total_recus }} reçus</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="kpi-card kpi-warning">
+                <div class="kpi-top">
+                    <div class="kpi-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <span class="kpi-badge">Rush</span>
+                </div>
+                <div class="kpi-value">
+                    {% if peak_hour %}{{ peak_hour }}{% else %}--{% endif %}
+                </div>
+                <div class="kpi-label">Heure de pointe</div>
+                <div class="kpi-foot">
+                    <span><i class="fas fa-users me-1"></i>{{ peak_hour_count }} prestations</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="kpi-card kpi-info">
+                <div class="kpi-top">
+                    <div class="kpi-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <span class="kpi-badge">Top</span>
+                </div>
+                <div class="kpi-value text-truncate" style="font-size: 1.3rem;">
+                    {% if best_employee %}{{ best_employee }}{% else %}--{% endif %}
+                </div>
+                <div class="kpi-label">Employé le plus rentable</div>
+                <div class="kpi-foot">
+                    <span><i class="fas fa-wallet me-1"></i>{{ best_employee_profit|floatformat:0|intcomma }} FCFA</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row g-4 mb-4">
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="mini-kpi-card">
+                <div class="mini-kpi-label">Service star</div>
+                <div class="mini-kpi-value">
+                    {% if top_service_name %}{{ top_service_name }}{% else %}--{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="mini-kpi-card">
+                <div class="mini-kpi-label">Catégorie dominante</div>
+                <div class="mini-kpi-value">
+                    {% if top_category_name %}{{ top_category_name }}{% else %}--{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="mini-kpi-card">
+                <div class="mini-kpi-label">Dépendance top 3 employés</div>
+                <div class="mini-kpi-value">{{ concentration_top3|floatformat:1 }}%</div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="mini-kpi-card">
+                <div class="mini-kpi-label">Part du CA via packs</div>
+                <div class="mini-kpi-value">{{ pack_share_pct|floatformat:1 }}%</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- GRAPHIQUES RANG 1 -->
+    <!-- ========================= -->
+    <div class="row g-4 mb-4">
+
+        <!-- Affluence + CA horaire -->
+        <div class="col-12 col-xl-8">
+            <div class="chart-card chart-card-xl">
+                <div class="chart-card-header">
+                    <div>
+                        <h5 class="chart-title mb-1">Affluence & CA par heure</h5>
+                        <p class="chart-subtitle mb-0">Identifier les heures de pointe et les créneaux les plus rentables</p>
+                    </div>
+                    <div class="chart-badge">
+                        <i class="fas fa-chart-bar me-2"></i>Heures
+                    </div>
+                </div>
+                <div class="chart-container tall-chart">
+                    <canvas id="hourlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Donut catégories -->
+        <div class="col-12 col-xl-4">
+            <div class="chart-card chart-card-xl">
+                <div class="chart-card-header">
+                    <div>
+                        <h5 class="chart-title mb-1">Répartition par catégorie</h5>
+                        <p class="chart-subtitle mb-0">Poids business des catégories de services</p>
+                    </div>
+                </div>
+
+                <div class="donut-wrapper">
+                    <div class="chart-container donut-chart-wrap">
+                        <canvas id="categoryDonut"></canvas>
+                        <div class="donut-center">
+                            <span class="donut-center-label">CA Total</span>
+                            <strong class="donut-center-value">{{ ca_total|floatformat:0|intcomma }}</strong>
+                            <small class="donut-center-unit">FCFA</small>
+                        </div>
+                    </div>
+                </div>
+
+               <div class="legend-list mt-3">
+                    {% for cat in categories_details %}
+                        <div class="legend-item">
+                            <div class="legend-left">
+                                <span class="legend-dot" style="background: {% if forloop.counter|divisibleby:2 %}#7c5cff{% else %}#5b8def{% endif %}"></span>
+                                <span class="legend-name">{{ cat.label }}</span>
+                            </div>
+                            <div class="legend-right">
+                                <strong>{{ cat.value|floatformat:0|intcomma }}</strong>
+                                <small>{{ cat.percentage }}%</small>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state-mini">Aucune donnée disponible.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- GRAPHIQUES RANG 2 -->
+    <!-- ========================= -->
+    <div class="row g-4 mb-4">
+
+        <!-- Top services par CA -->
+        <div class="col-12 col-xl-6">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div>
+                        <h5 class="chart-title mb-1">Top services les plus rentables</h5>
+                        <p class="chart-subtitle mb-0">Classement par chiffre d'affaires généré</p>
+                    </div>
+                    <div class="chart-badge success">
+                        <i class="fas fa-crown me-2"></i>CA
+                    </div>
+                </div>
+                <div class="chart-container medium-chart">
+                    <canvas id="topServicesCAChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top services par volume -->
+        <div class="col-12 col-xl-6">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div>
+                        <h5 class="chart-title mb-1">Top services les plus vendus</h5>
+                        <p class="chart-subtitle mb-0">Classement par volume de prestations</p>
+                    </div>
+                    <div class="chart-badge info">
+                        <i class="fas fa-fire me-2"></i>Volume
+                    </div>
+                </div>
+                <div class="chart-container medium-chart">
+                    <canvas id="topServicesCountChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- GRAPHIQUES RANG 3 -->
+    <!-- ========================= -->
+    <div class="row g-4 mb-4">
+
+        <!-- Packs vs services simples -->
+        <div class="col-12 col-lg-5">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div>
+                        <h5 class="chart-title mb-1">Packs vs services simples</h5>
+                        <p class="chart-subtitle mb-0">Mesure l’impact réel des packs sur le business</p>
+                    </div>
+                </div>
+
+                <div class="donut-wrapper">
+                    <div class="chart-container donut-chart-wrap small-donut">
+                        <canvas id="packSplitChart"></canvas>
+                        <div class="donut-center">
+                            <span class="donut-center-label">Packs</span>
+                            <strong class="donut-center-value">{{ pack_share_pct|floatformat:0 }}</strong>
+                            <small class="donut-center-unit">%</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-6">
+                        <div class="stat-box">
+                            <div class="stat-box-label">Services simples</div>
+                            <div class="stat-box-value">{{ simple_total|floatformat:0|intcomma }} FCFA</div>
+                            <div class="stat-box-sub">{{ simple_count }} ventes</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-box">
+                            <div class="stat-box-label">Packs</div>
+                            <div class="stat-box-value">{{ pack_total|floatformat:0|intcomma }} FCFA</div>
+                            <div class="stat-box-sub">{{ pack_count }} ventes</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CA / Cout / Profit par employé -->
+        <div class="col-12 col-lg-7">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div>
+                        <h5 class="chart-title mb-1">CA / Coût / Profit par employé</h5>
+                        <p class="chart-subtitle mb-0">Visualiser la vraie rentabilité de chaque collaborateur</p>
+                    </div>
+                    <div class="chart-badge warning">
+                        <i class="fas fa-user-chart me-2"></i>RH & Marge
+                    </div>
+                </div>
+                <div class="chart-container tall-chart">
+                    <canvas id="employeePerformanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- GRAPHIQUES RANG 4 -->
+    <!-- ========================= -->
+    <div class="row g-4 mb-4">
+
+        <!-- Panier moyen par employé -->
+        <div class="col-12 col-xl-6">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div>
+                        <h5 class="chart-title mb-1">Panier moyen par employé</h5>
+                        <p class="chart-subtitle mb-0">Capacité à vendre des prestations à forte valeur</p>
+                    </div>
+                </div>
+                <div class="chart-container medium-chart">
+                    <canvas id="employeeBasketChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rentabilité par employé -->
+        <div class="col-12 col-xl-6">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div>
+                        <h5 class="chart-title mb-1">Taux de rentabilité par employé</h5>
+                        <p class="chart-subtitle mb-0">Comparer la marge générée par collaborateur</p>
+                    </div>
+                </div>
+                <div class="chart-container medium-chart">
+                    <canvas id="employeeRentabilityChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- TABLEAU BONUS -->
+    <!-- ========================= -->
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div>
+                        <h5 class="chart-title mb-1">Lecture rapide business</h5>
+                        <p class="chart-subtitle mb-0">Interprétation instantanée des performances du mois</p>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="insight-card">
+                            <div class="insight-icon primary"><i class="fas fa-star"></i></div>
+                            <div class="insight-title">Service star</div>
+                            <div class="insight-value">
+                                {% if top_service_name %}{{ top_service_name }}{% else %}Aucune donnée{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="insight-card">
+                            <div class="insight-icon success"><i class="fas fa-layer-group"></i></div>
+                            <div class="insight-title">Catégorie dominante</div>
+                            <div class="insight-value">
+                                {% if top_category_name %}{{ top_category_name }}{% else %}Aucune donnée{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="insight-card">
+                            <div class="insight-icon warning"><i class="fas fa-box-open"></i></div>
+                            <div class="insight-title">Services distincts vendus</div>
+                            <div class="insight-value">{{ nb_services_distincts }}</div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="insight-card">
+                            <div class="insight-icon info"><i class="fas fa-users"></i></div>
+                            <div class="insight-title">Dépendance Top 3</div>
+                            <div class="insight-value">{{ concentration_top3|floatformat:1 }}%</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ========================= -->
+<!-- CHART JS -->
+<!-- ========================= -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // =========================
+    // HELPERS
+    // =========================
+    const currencyFormat = (value) => {
+        try {
+            return new Intl.NumberFormat('fr-FR').format(value) + ' FCFA';
+        } catch (e) {
+            return value + ' FCFA';
+        }
+    };
+
+    const numberFormat = (value) => {
+        try {
+            return new Intl.NumberFormat('fr-FR').format(value);
+        } catch (e) {
+            return value;
+        }
+    };
+
+    const palette = [
+        '#5B8DEF',
+        '#7C5CFF',
+        '#19C37D',
+        '#F59E0B',
+        '#EF4444',
+        '#14B8A6',
+        '#8B5CF6',
+        '#EC4899',
+        '#0EA5E9',
+        '#22C55E'
+    ];
+
+    Chart.defaults.font.family = "'Inter', 'Segoe UI', sans-serif";
+    Chart.defaults.color = '#6b7280';
+    Chart.defaults.borderColor = 'rgba(148, 163, 184, 0.12)';
+
+    // Plugin texte central donut
+    const centerTextPlugin = {
+        id: 'centerTextPlugin',
+        beforeDraw(chart) {
+            if (chart.config.options.plugins.centerText) {
+                const { ctx } = chart;
+                const meta = chart.getDatasetMeta(0);
+                if (!meta || !meta.data || !meta.data.length) return;
+
+                const x = meta.data[0].x;
+                const y = meta.data[0].y;
+
+                const centerText = chart.config.options.plugins.centerText;
+
+                ctx.save();
+
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '600 12px Inter';
+                ctx.fillText(centerText.label || '', x, y - 18);
+
+                ctx.fillStyle = '#0f172a';
+                ctx.font = '700 18px Inter';
+                ctx.fillText(centerText.value || '', x, y + 2);
+
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '500 11px Inter';
+                ctx.fillText(centerText.unit || '', x, y + 22);
+
+                ctx.restore();
+            }
+        }
+    };
+
+    Chart.register(centerTextPlugin);
+
+    // =========================
+    // DATA DJANGO
+    // =========================
+    const labelsHour = {{ labels_hour|safe }};
+    const valuesHourCount = {{ values_hour_count|safe }};
+    const valuesHourCA = {{ values_hour_ca|safe }};
+
+    const labelsCat = {{ labels_cat|safe }};
+    const valuesCat = {{ values_cat|safe }};
+    const categoryPercentages = {{ category_percentages|safe }};
+
+    const labelsServicesCA = {{ labels_services_ca|safe }};
+    const valuesServicesCA = {{ values_services_ca|safe }};
+    const countsServicesCA = {{ counts_services_ca|safe }};
+    const colorsServicesCA = {{ colors_services_ca|safe }};
+
+    const labelsServicesCount = {{ labels_services_count|safe }};
+    const valuesServicesCount = {{ values_services_count|safe }};
+    const valuesServicesCountCA = {{ values_services_count_ca|safe }};
+    const colorsServicesCount = {{ colors_services_count|safe }};
+
+    const labelsPackSplit = {{ labels_pack_split|safe }};
+    const valuesPackSplitCA = {{ values_pack_split_ca|safe }};
+    const valuesPackSplitCount = {{ values_pack_split_count|safe }};
+
+    const empNames = {{ emp_names|safe }};
+    const empCA = {{ emp_ca|safe }};
+    const empCout = {{ emp_cout|safe }};
+    const empProfit = {{ emp_profit|safe }};
+    const empPanier = {{ emp_panier|safe }};
+    const empRentabilite = {{ emp_rentabilite|safe }};
+    const empBonus = {{ emp_bonus|safe }};
+
+    // =========================
+    // 1) AFFLUENCE + CA HORAIRE
+    // =========================
+    const hourlyCtx = document.getElementById('hourlyChart');
+    if (hourlyCtx) {
+        new Chart(hourlyCtx, {
+            type: 'bar',
+            data: {
+                labels: labelsHour,
+                datasets: [
+                    {
+                        label: 'Nombre de prestations',
+                        data: valuesHourCount,
+                        backgroundColor: 'rgba(91, 141, 239, 0.85)',
+                        borderRadius: 10,
+                        borderSkipped: false,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'CA horaire (FCFA)',
+                        data: valuesHourCA,
+                        type: 'line',
+                        borderColor: '#7C5CFF',
+                        backgroundColor: 'rgba(124, 92, 255, 0.12)',
+                        tension: 0.35,
+                        fill: true,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#7C5CFF',
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            usePointStyle: true,
+                            boxWidth: 8
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (context.dataset.label.includes('CA')) {
+                                    return context.dataset.label + ': ' + currencyFormat(context.raw);
+                                }
+                                return context.dataset.label + ': ' + numberFormat(context.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Prestations'
+                        }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'CA (FCFA)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return numberFormat(value);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // =========================
+    // 2) DONUT CATEGORIES
+    // =========================
+    const categoryCtx = document.getElementById('categoryDonut');
+    if (categoryCtx) {
+        new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: labelsCat,
+                datasets: [{
+                    data: valuesCat,
+                    backgroundColor: labelsCat.map((_, i) => palette[i % palette.length]),
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: {
+                    legend: { display: false },
+                    centerText: {
+                        label: 'CA Total',
+                        value: numberFormat({{ ca_total|floatformat:0 }}),
+                        unit: 'FCFA'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const idx = context.dataIndex;
+                                const pct = categoryPercentages[idx] || 0;
+                                return `${context.label}: ${currencyFormat(context.raw)} (${pct}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // =========================
+    // 3) TOP SERVICES PAR CA
+    // =========================
+    const topServicesCACtx = document.getElementById('topServicesCAChart');
+    if (topServicesCACtx) {
+        new Chart(topServicesCACtx, {
+            type: 'bar',
+            data: {
+                labels: labelsServicesCA,
+                datasets: [{
+                    label: 'CA généré',
+                    data: valuesServicesCA,
+                    backgroundColor: (colorsServicesCA && colorsServicesCA.length) ? colorsServicesCA : palette,
+                    borderRadius: 12,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                const idx = context.dataIndex;
+                                const nb = countsServicesCA[idx] || 0;
+                                return 'Ventes : ' + numberFormat(nb);
+                            },
+                            label: function(context) {
+                                return 'CA : ' + currencyFormat(context.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return numberFormat(value);
+                            }
+                        }
+                    },
+                    y: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // =========================
+    // 4) TOP SERVICES PAR VOLUME
+    // =========================
+    const topServicesCountCtx = document.getElementById('topServicesCountChart');
+    if (topServicesCountCtx) {
+        new Chart(topServicesCountCtx, {
+            type: 'bar',
+            data: {
+                labels: labelsServicesCount,
+                datasets: [{
+                    label: 'Nombre de ventes',
+                    data: valuesServicesCount,
+                    backgroundColor: (colorsServicesCount && colorsServicesCount.length) ? colorsServicesCount : palette,
+                    borderRadius: 12,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                const idx = context.dataIndex;
+                                const ca = valuesServicesCountCA[idx] || 0;
+                                return 'CA : ' + currencyFormat(ca);
+                            },
+                            label: function(context) {
+                                return 'Ventes : ' + numberFormat(context.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true
+                    },
+                    y: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // =========================
+    // 5) PACKS VS SERVICES SIMPLES
+    // =========================
+    const packSplitCtx = document.getElementById('packSplitChart');
+    if (packSplitCtx) {
+        new Chart(packSplitCtx, {
+            type: 'doughnut',
+            data: {
+                labels: labelsPackSplit,
+                datasets: [{
+                    data: valuesPackSplitCA,
+                    backgroundColor: ['#5B8DEF', '#7C5CFF'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                cutout: '74%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            boxWidth: 8
+                        }
+                    },
+                    centerText: {
+                        label: 'Part Packs',
+                        value: '{{ pack_share_pct|floatformat:0 }}',
+                        unit: '%'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const idx = context.dataIndex;
+                                const count = valuesPackSplitCount[idx] || 0;
+                                return `${context.label}: ${currencyFormat(context.raw)} | ${count} ventes`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // =========================
+    // 6) PERFORMANCE EMPLOYÉS
+    // =========================
+    const employeePerformanceCtx = document.getElementById('employeePerformanceChart');
+    if (employeePerformanceCtx) {
+        new Chart(employeePerformanceCtx, {
+            type: 'bar',
+            data: {
+                labels: empNames,
+                datasets: [
+                    {
+                        label: 'CA',
+                        data: empCA,
+                        backgroundColor: 'rgba(25, 195, 125, 0.85)',
+                        borderRadius: 10,
+                        borderSkipped: false
+                    },
+                    {
+                        label: 'Coût',
+                        data: empCout,
+                        backgroundColor: 'rgba(245, 158, 11, 0.85)',
+                        borderRadius: 10,
+                        borderSkipped: false
+                    },
+                    {
+                        label: 'Profit',
+                        data: empProfit,
+                        backgroundColor: 'rgba(91, 141, 239, 0.85)',
+                        borderRadius: 10,
+                        borderSkipped: false
+                    }
+                ]
+            },
+            options: {
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            usePointStyle: true,
+                            boxWidth: 8
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + currencyFormat(context.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return numberFormat(value);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // =========================
+    // 7) PANIER MOYEN EMPLOYÉ
+    // =========================
+    const employeeBasketCtx = document.getElementById('employeeBasketChart');
+    if (employeeBasketCtx) {
+        new Chart(employeeBasketCtx, {
+            type: 'bar',
+            data: {
+                labels: empNames,
+                datasets: [{
+                    label: 'Panier moyen',
+                    data: empPanier,
+                    backgroundColor: 'rgba(20, 184, 166, 0.85)',
+                    borderRadius: 12,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Panier moyen : ' + currencyFormat(context.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return numberFormat(value);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // =========================
+    // 8) RENTABILITÉ EMPLOYÉ
+    // =========================
+    const employeeRentabilityCtx = document.getElementById('employeeRentabilityChart');
+    if (employeeRentabilityCtx) {
+        new Chart(employeeRentabilityCtx, {
+            type: 'bar',
+            data: {
+                labels: empNames,
+                datasets: [{
+                    label: 'Rentabilité (%)',
+                    data: empRentabilite,
+                    backgroundColor: empRentabilite.map(v => v >= 0 ? 'rgba(124, 92, 255, 0.85)' : 'rgba(239, 68, 68, 0.85)'),
+                    borderRadius: 12,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                const idx = context.dataIndex;
+                                const bonus = empBonus[idx] || 0;
+                                return 'Bonus : ' + currencyFormat(bonus);
+                            },
+                            label: function(context) {
+                                return 'Rentabilité : ' + context.raw + '%';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+});
+</script>
+
+<!-- ========================= -->
+<!-- STYLES PREMIUM -->
+<!-- ========================= -->
+<style>
+    :root {
+        --bg-page: #f6f8fc;
+        --card-bg: rgba(255, 255, 255, 0.92);
+        --card-border: rgba(226, 232, 240, 0.8);
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+
+        --primary: #5B8DEF;
+        --primary-2: #7C5CFF;
+        --success: #19C37D;
+        --warning: #F59E0B;
+        --danger: #EF4444;
+        --info: #14B8A6;
+
+        --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.06);
+        --shadow-hover: 0 18px 40px rgba(15, 23, 42, 0.10);
+        --radius-xl: 24px;
+        --radius-lg: 18px;
+        --radius-md: 14px;
+    }
+
+    .dashboard-graph-page {
+        background:
+            radial-gradient(circle at top right, rgba(124, 92, 255, 0.08), transparent 28%),
+            radial-gradient(circle at top left, rgba(91, 141, 239, 0.08), transparent 25%),
+            var(--bg-page);
+        min-height: 100vh;
+        border-radius: 24px;
+    }
+
+    .hero-icon {
+        width: 58px;
+        height: 58px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 1.35rem;
+        background: linear-gradient(135deg, var(--primary), var(--primary-2));
+        box-shadow: 0 12px 30px rgba(91, 141, 239, 0.28);
+    }
+
+    .page-title {
+        font-size: 1.7rem;
+        font-weight: 800;
+        color: var(--text-main);
+        letter-spacing: -0.02em;
+    }
+
+    .page-subtitle {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+
+    .filter-card,
+    .chart-card,
+    .kpi-card,
+    .mini-kpi-card,
+    .insight-card {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: var(--shadow-soft);
+    }
+
+    .filter-card {
+        border-radius: 20px;
+        padding: 14px 16px;
+    }
+
+    .premium-select,
+    .premium-input {
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        min-height: 46px;
+        box-shadow: none !important;
+    }
+
+    .premium-select:focus,
+    .premium-input:focus {
+        border-color: rgba(91, 141, 239, 0.45);
+        box-shadow: 0 0 0 0.2rem rgba(91, 141, 239, 0.12) !important;
+    }
+
+    .btn-gradient-primary {
+        min-height: 46px;
+        border: none;
+        border-radius: 14px;
+        color: #fff;
+        font-weight: 700;
+        padding: 0.7rem 1.2rem;
+        background: linear-gradient(135deg, var(--primary), var(--primary-2));
+        box-shadow: 0 12px 24px rgba(91, 141, 239, 0.22);
+        transition: all 0.25s ease;
+    }
+
+    .btn-gradient-primary:hover {
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 16px 28px rgba(91, 141, 239, 0.28);
+    }
+
+    /* KPI */
+    .kpi-card {
+        border-radius: 24px;
+        padding: 20px;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.25s ease;
+    }
+
+    .kpi-card:hover,
+    .chart-card:hover,
+    .mini-kpi-card:hover,
+    .insight-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .kpi-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at top right, rgba(255,255,255,0.4), transparent 35%);
+        pointer-events: none;
+    }
+
+    .kpi-primary { border-top: 4px solid var(--primary); }
+    .kpi-success { border-top: 4px solid var(--success); }
+    .kpi-warning { border-top: 4px solid var(--warning); }
+    .kpi-info { border-top: 4px solid var(--info); }
+
+    .kpi-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+    }
+
+    .kpi-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, rgba(91, 141, 239, 0.14), rgba(124, 92, 255, 0.14));
+        color: var(--primary);
+        font-size: 1.1rem;
+    }
+
+    .kpi-badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 6px 10px;
+        border-radius: 999px;
+    }
+
+    .kpi-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--text-main);
+        line-height: 1.2;
+        margin-bottom: 6px;
+        letter-spacing: -0.02em;
+    }
+
+    .kpi-label {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+        margin-bottom: 12px;
+    }
+
+    .kpi-foot {
+        font-size: 0.82rem;
+        color: #94a3b8;
+        font-weight: 600;
+    }
+
+    /* Mini KPI */
+    .mini-kpi-card {
+        border-radius: 18px;
+        padding: 16px 18px;
+        height: 100%;
+    }
+
+    .mini-kpi-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+
+    .mini-kpi-value {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: var(--text-main);
+        line-height: 1.3;
+    }
+
+    /* Chart card */
+    .chart-card {
+        border-radius: 24px;
+        padding: 20px;
+        height: 100%;
+    }
+
+    .chart-card-xl {
+        min-height: 100%;
+    }
+
+    .chart-card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .chart-title {
+        font-size: 1.08rem;
+        font-weight: 800;
+        color: var(--text-main);
+        letter-spacing: -0.01em;
+    }
+
+    .chart-subtitle {
+        font-size: 0.86rem;
+        color: var(--text-muted);
+    }
+
+    .chart-badge {
+        white-space: nowrap;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--primary);
+        background: rgba(91, 141, 239, 0.08);
+        border: 1px solid rgba(91, 141, 239, 0.15);
+    }
+
+    .chart-badge.success {
+        color: var(--success);
+        background: rgba(25, 195, 125, 0.08);
+        border-color: rgba(25, 195, 125, 0.15);
+    }
+
+    .chart-badge.info {
+        color: var(--info);
+        background: rgba(20, 184, 166, 0.08);
+        border-color: rgba(20, 184, 166, 0.15);
+    }
+
+    .chart-badge.warning {
+        color: var(--warning);
+        background: rgba(245, 158, 11, 0.08);
+        border-color: rgba(245, 158, 11, 0.15);
+    }
+
+    .chart-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .tall-chart {
+        height: 380px;
+    }
+
+    .medium-chart {
+        height: 340px;
+    }
+
+    .donut-chart-wrap {
+        height: 290px;
+        position: relative;
+    }
+
+    .small-donut {
+        height: 250px;
+    }
+
+    .donut-wrapper {
+        position: relative;
+    }
+
+    .donut-center {
+        position: absolute;
+        inset: 0;
+        display: none; /* le plugin canvas gère déjà le texte, on garde si tu veux fallback */
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        pointer-events: none;
+    }
+
+    .donut-center-label {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        font-weight: 600;
+    }
+
+    .donut-center-value {
+        font-size: 1.15rem;
+        color: var(--text-main);
+        font-weight: 800;
+    }
+
+    .donut-center-unit {
+        font-size: 0.75rem;
+        color: #94a3b8;
+    }
+
+    /* Legend */
+    .legend-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-height: 280px;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 14px;
+        background: #f8fafc;
+        border: 1px solid #eef2f7;
+    }
+
+    .legend-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+
+    .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        background: var(--primary);
+    }
+
+    .legend-name {
+        font-size: 0.9rem;
+        color: var(--text-main);
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 180px;
+    }
+
+    .legend-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
+    }
+
+    .legend-right strong {
+        font-size: 0.85rem;
+        color: var(--text-main);
+    }
+
+    .legend-right small {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+    }
+
+    /* Stat boxes */
+    .stat-box {
+        border-radius: 18px;
+        padding: 14px;
+        background: #f8fafc;
+        border: 1px solid #edf2f7;
+        height: 100%;
+    }
+
+    .stat-box-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+
+    .stat-box-value {
+        font-size: 1rem;
+        font-weight: 800;
+        color: var(--text-main);
+        line-height: 1.2;
+    }
+
+    .stat-box-sub {
+        margin-top: 4px;
+        font-size: 0.78rem;
+        color: #94a3b8;
+        font-weight: 600;
+    }
+
+    /* Insights */
+    .insight-card {
+        border-radius: 20px;
+        padding: 18px;
+        height: 100%;
+    }
+
+    .insight-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 12px;
+        font-size: 1rem;
+    }
+
+    .insight-icon.primary {
+        background: rgba(91, 141, 239, 0.1);
+        color: var(--primary);
+    }
+
+    .insight-icon.success {
+        background: rgba(25, 195, 125, 0.1);
+        color: var(--success);
+    }
+
+    .insight-icon.warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+    }
+
+    .insight-icon.info {
+        background: rgba(20, 184, 166, 0.1);
+        color: var(--info);
+    }
+
+    .insight-title {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .insight-value {
+        font-size: 1rem;
+        color: var(--text-main);
+        font-weight: 800;
+        line-height: 1.35;
+    }
+
+    .empty-state-mini {
+        padding: 14px;
+        text-align: center;
+        color: var(--text-muted);
+        background: #f8fafc;
+        border-radius: 14px;
+        border: 1px dashed #dbe3ee;
+        font-size: 0.9rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 1199.98px) {
+        .tall-chart {
+            height: 340px;
+        }
+
+        .medium-chart {
+            height: 320px;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .page-title {
+            font-size: 1.35rem;
+        }
+
+        .kpi-value {
+            font-size: 1.45rem;
+        }
+
+        .tall-chart,
+        .medium-chart {
+            height: 300px;
+        }
+
+        .donut-chart-wrap {
+            height: 240px;
+        }
+
+        .legend-name {
+            max-width: 120px;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+
+{% block title %}Rendez-vous - Liste{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-calendar-alt me-2"></i>Liste des Rendez-vous
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+<li class="breadcrumb-item active">Rendez-vous</li>
+{% endblock %}
+{% block content %}
+
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 80px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 40px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+        display: flex;
+    }
+    
+    .timeline-time {
+        width: 80px;
+        text-align: center;
+        position: absolute;
+        left: -80px;
+        top: 0;
+    }
+    
+    .timeline-content {
+        flex-grow: 1;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -95px;
+        top: 5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        border: 3px solid white;
+        box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.2);
+    }
+    
+    .appointment-card {
+        padding: 1rem;
+        background-color: white;
+        border-radius: 10px;
+        border: 1px solid #e6e9f0;
+        transition: all 0.3s ease;
+    }
+    
+    .appointment-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .avatar-sm {
+        flex-shrink: 0;
+    }
+    
+    .bulk-actions {
+        animation: slideInUp 0.3s ease-out;
+    }
+    
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+
+
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark">Historique des Ventes — BEL'R</h2>
+    </div>
+
+    <div class="row mb-4 g-3">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm border-start border-primary border-4 text-center p-3 h-100">
+                <div class="text-muted small text-uppercase fw-bold">Tickets Émis</div>
+                <div class="fs-2 fw-bold text-dark">{{ total_tickets }}</div>
+                <small class="text-muted">sur la période affichée</small>
+            </div>
+        </div>
+
+        {% if est_gerant %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm border-start border-success border-4 text-center p-3 h-100">
+                <div class="text-muted small text-uppercase fw-bold">Chiffre d'Affaires</div>
+                <div class="fs-2 fw-bold text-success">{{ chiffre_affaire }} FCFA</div>
+                <small class="text-muted">total net encaissé</small>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm border-start border-danger border-4 p-3 h-100">
+                <div class="text-muted small text-uppercase fw-bold text-center mb-1">Contrôle des Annulations</div>
+                
+                <div class="d-flex align-items-center justify-content-around my-auto">
+                    <div class="text-center">
+                        <span class="d-block text-danger fw-bold fs-3 mb-0" id="compteur-alertes">0</span>
+                        <small class="text-muted" style="font-size: 0.75rem;">En attente ⚠️</small>
+                    </div>
+                    
+                    <div class="vr text-muted opacity-25" style="height: 35px;"></div>
+                    
+                    <div class="text-center">
+                        <span class="d-block text-dark fw-bold fs-3 mb-0">{{ total_supprimes|default:0 }}</span>
+                        <small class="text-muted" style="font-size: 0.75rem;">Déjà supprimés 📂</small>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-1">
+                    <small class="text-muted" style="font-size: 0.75rem;">Suivi de l'intégrité de la caisse</small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-body p-4 bg-light rounded shadow-sm">
+            <form method="GET" action="{% url 'historique_paiement' %}" class="row g-3">
+                
+                <div class="col-md-4">
+                    <label class="form-label fw-bold text-secondary">Recherche globale</label>
+                    <input type="text" name="q" class="form-control" placeholder="Entrez un n° de reçu..." value="{{ query_general }}">
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold text-secondary">Date Début</label>
+                    <input type="date" name="date_debut" class="form-control" value="{{ date_debut }}">
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold text-secondary">Date Fin</label>
+                    <input type="date" name="date_fin" class="form-control" value="{{ date_fin }}">
+                </div>
+
+                {% if est_gerant %}
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-secondary">Filtrer par Coiffeuse</label>
+                    <select name="employe" class="form-select">
+                        <option value="">-- Toutes les coiffeuses --</option>
+                        {% for emp in tous_les_employes %}
+                            <option value="{{ emp.id }}" {% if employe_selectionne == emp.id|slugify %}selected{% endif %}>
+                                {{ emp.nom }} {{ emp.prenom }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-secondary">Enregistré par</label>
+                    <select name="auteur" class="form-select">
+                        <option value="">-- Tout le personnel --</option>
+                        {% for aut in tous_les_auteurs %}
+                            <option value="{{ aut.id }}" {% if auteur_selectionne == aut.id|slugify %}selected{% endif %}>
+                                {{ aut.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <div class="col-12 d-flex justify-content-end gap-2 mt-3">
+                    <a href="{% url 'historique_paiement' %}" class="btn btn-outline-secondary fw-semibold">
+                        Réinitialiser
+                    </a>
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm">
+                        🔍 Filtrer les ventes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="py-3 ps-3">Date</th>
+                        <th class="py-3">N° Ticket</th> 
+                        <th class="py-3">Enregistré par</th> <th class="py-3">Statut</th>
+                        <th class="py-3">Total</th>
+                        <th class="py-3 text-end pe-3">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for Filtered_items in ventes %}
+                    <tr class="{% if Filtered_items.demande_suppression %}table-danger border-start border-danger border-4{% endif %}">
+                        
+                        <td class="ps-3 text-secondary small fw-medium">
+                            {{ Filtered_items.date|date:"d/m/Y H:i" }}
+                        </td>
+                        
+                        <td>
+                            <a href="{% url 'paiement_detail' groupe_id=Filtered_items.numero_groupe %}" class="fw-bold text-decoration-none {% if Filtered_items.demande_suppression %}text-danger{% else %}text-primary{% endif %}">
+                                #{{ Filtered_items.numero_recu }}
+                            </a>
+                        </td>
+                        
+                        <td class="fw-semibold text-dark">
+                            <i class="fas fa-user-circle me-1 text-secondary"></i>
+                            {{ Filtered_items.user.username|default:"Système" }}
+                        </td>
+
+                        <td>
+                            {% if Filtered_items.demande_suppression %}
+                                <span class="badge bg-danger text-white px-2.5 py-1.5 animate__animated animate__flash animate__infinite">
+                                    🚨 À Supprimer
+                                </span>
+                            {% else %}
+                                <span class="badge bg-light text-success border border-success-subtle px-2 py-1">
+                                    ✓ Encaissé
+                                </span>
+                            {% endif %}
+                        </td>
+                        
+                        <td class="fw-bold {% if Filtered_items.demande_suppression %}text-danger{% else %}text-success{% endif %}">
+                           {{ Filtered_items.total_global }} FCFA
+                        </td>
+                        
+                        <td class="text-end pe-3">
+                            <a href="{% url 'paiement_detail' groupe_id=Filtered_items.numero_groupe %}" 
+                               class="btn btn-sm {% if Filtered_items.demande_suppression %}btn-danger fw-bold shadow-sm{% else %}btn-outline-dark{% endif %}">
+                                👁️ Ouvrir {% if Filtered_items.demande_suppression %}⚠️{% endif %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-5 font-italic bg-white">
+                            <div class="py-3">
+                                📂 Aucun ticket trouvé pour cette période ou ces critères de recherche.
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const lignesAlertes = document.querySelectorAll('.table-danger').length;
+        const conteneur = document.getElementById('compteur-alertes');
+        if (conteneur) {
+            conteneur.innerHTML = lignesAlertes;
+            if (lignesAlertes > 0) {
+                conteneur.className = "d-block text-danger fw-bold fs-3 mb-0 animate__animated animate__pulse animate__infinite";
+            } else {
+                conteneur.className = "d-block text-muted fw-bold fs-3 mb-0";
+            }
+        }
+    });
+</script>
+{% endblock %}

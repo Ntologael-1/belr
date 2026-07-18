@@ -1,0 +1,682 @@
+{% extends "base.html" %}
+
+{% block page_title %}Historique stock{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item">Inventaire</li>
+<li class="breadcrumb-item active">Historique</li>
+{% endblock %}
+
+<!--
+<div class="container-fluid">
+
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Produit</th>
+                    <th>Type</th>
+                    <th>Quantité</th>
+                    <th>Utilisateur</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mvt in mouvements %}
+                <tr>
+                    <td>{{ mvt.date|date:"d/m/Y H:i" }}</td>
+                    <td>{{ mvt.produit }}</td>
+                    <td>{{ mvt.get_type_display }}</td>
+                    <td>{{ mvt.quantite }}</td>
+                    <td>{{ mvt.user }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        Aucun mouvement trouvé
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+-->
+
+
+
+
+
+<!-- 
+
+<div class="container py-4">
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h2 class="fw-bold text-dark">Gestion des Charges Fixes</h2>
+            <p class="text-muted">Suivi des dépenses structurelles de BEL'R</p>
+        </div>
+        <div class="col-auto">
+            <div class="card bg-primary text-white border-0 shadow-sm p-3 rounded-4">
+                <small class="opacity-75">Total à payer (Dette)</small>
+                <h4 class="mb-0 fw-bold">{{ total_du }} FCFA</h4>
+            </div>
+        </div>
+    </div>
+
+   
+    <div class="card border-0 shadow-sm rounded-4 mb-5">
+        <div class="card-header bg-white py-3 border-bottom-0">
+            <h5 class="mb-0 text-danger fw-bold"><i class="fas fa-exclamation-circle me-2"></i>Charges en attente</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Libellé</th>
+                        <th>Type</th>
+                        <th>Échéance</th>
+                        <th>Montant Total</th>
+                        <th>Reste à payer</th>
+                        <th class="text-end pe-4">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for charge in charges_en_attente %}
+                    <tr>
+                        <td class="ps-4 fw-bold">{{ charge.libelle }}</td>
+                        <td><span class="badge bg-secondary-soft text-secondary">{{ charge.get_type_charge_display }}</span></td>
+                        <td>{{ charge.date_echeance|date:"d M Y" }}</td>
+                        <td>{{ charge.montant_total }} FCFA</td>
+                        <td class="text-danger fw-bold">{{ charge.reste_a_payer }} FCFA</td>
+                        <td class="text-end pe-4">
+                           <a href="{% url 'inventaire:enregistrer_paiement' charge.id %}" class="btn btn-primary btn-sm rounded-pill px-3">
+                                <i class="fas fa-wallet me-1"></i> Régler
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center py-4">Toutes les charges sont à jour ! 🎉</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+ 
+  
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 text-success fw-bold"><i class="fas fa-check-circle me-2"></i>Historique récent (Réglées)</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="small text-muted">
+                    <tr>
+                        <th class="ps-4">Libellé</th>
+                        <th>Montant Payé</th> 
+                        <th>Date de paiement</th>
+                        <th>Mode</th>
+                    </tr>
+                </thead>
+                <tbody class="opacity-75">
+                    {% for p in paiements_recents %}
+                    <tr>
+                        <td class="ps-4">
+                            <span class="d-block fw-bold text-dark">{{ p.charge.libelle }}</span>
+                            <small class="text-muted">{{ p.charge.get_type_charge_display }}</small>
+                        </td>
+                        <td class="text-success fw-bold">
+                            {{ p.montant_verse }} FCFA
+                        </td>
+                        <td>
+                            <i class="fas fa-calendar-check text-success me-2"></i>
+                            {{ p.date_paiement|date:"d M Y" }}
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="btn-group">
+                               
+                                <a href="{% url 'inventaire:modifier_paiement' p.charge.id p.pk %}" 
+                                class="btn btn-sm btn-outline-primary" 
+                                title="Modifier le paiement">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                
+                                
+                                <a href="{% url 'inventaire:supprimer_paiement' p.pk %}" 
+                                class="btn btn-sm btn-outline-danger" 
+                                title="Annuler le paiement">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-muted">Aucun paiement enregistré pour BEL'R.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-secondary-soft { background-color: #f8f9fa; border: 1px solid #dee2e6; color: #6c757d; }
+</style>
+-->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!--
+<div class="container py-4">
+    
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h2 class="fw-bold text-dark mb-1">Gestion des Charges Fixes</h2>
+            <p class="text-muted mb-0">Suivi des dépenses structurelles de <span class="text-primary fw-bold">BEL'R</span></p>
+        </div>
+        <div class="col-auto">
+            <div class="card bg-primary text-white border-0 shadow-lg p-3 rounded-4">
+                <div class="d-flex align-items-center">
+                    <div class="me-3 bg-white bg-opacity-25 p-2 rounded-3">
+                        <i class="fas fa-hand-holding-usd fa-lg"></i>
+                    </div>
+                    <div>
+                        <small class="opacity-75 d-block">Dette totale (Reste à payer)</small>
+                        <h4 class="mb-0 fw-bold">{{ total_du }} FCFA</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   
+    <div class="card border-0 shadow-sm rounded-4 mb-5 overflow-hidden">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
+            <h5 class="mb-0 text-danger fw-bold">
+                <i class="fas fa-clock me-2"></i>Charges en attente
+            </h5>
+            <a href="{% url 'inventaire:creer_charge' %}" class="btn btn-primary btn-sm rounded-pill px-4 shadow-sm">
+                <i class="fas fa-plus me-1"></i> Nouvelle charge
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="bg-light">
+                    <tr class="small text-uppercase text-muted">
+                        <th class="ps-4">Libellé & Type</th>
+                        <th>Échéance</th>
+                        <th>Montant Total</th>
+                        <th>Reste à payer</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for charge in charges_en_attente %}
+                    <tr>
+                        <td class="ps-4">
+                            <span class="fw-bold text-dark d-block">{{ charge.libelle }}</span>
+                            <span class="badge bg-light text-secondary border rounded-pill small">{{ charge.get_type_charge_display }}</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="far fa-calendar-alt me-2 text-muted"></i>
+                                {{ charge.date_echeance|date:"d M Y" }}
+                            </div>
+                        </td>
+                        <td class="text-dark">{{ charge.montant_total }} FCFA</td>
+                        <td>
+                            <span class="text-danger fw-bold">{{ charge.reste_a_payer }} FCFA</span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="btn-group">
+                               
+                                <a href="{% url 'inventaire:enregistrer_paiement' charge.id %}" class="btn btn-sm btn-success rounded-pill px-3 me-2 shadow-sm">
+                                    <i class="fas fa-wallet me-1"></i> Régler
+                                </a>
+                               
+                                <a href="{% url 'inventaire:modifier_charge' charge.id %}" class="btn btn-sm btn-outline-secondary border-0" title="Modifier la charge">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                
+                                <a href="{% url 'inventaire:supprimer_charge' charge.id %}" class="btn btn-sm btn-outline-danger border-0" title="Supprimer la charge">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="fas fa-check-circle fa-3x text-success mb-3 opacity-25"></i>
+                                <p class="mb-0">Toutes vos charges sont réglées !</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+  
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
+            <h5 class="mb-0 text-success fw-bold">
+                <i class="fas fa-history me-2"></i>Historique des paiements
+            </h5>
+            
+            
+            <div class="d-flex align-items-center">
+                <i class="fas fa-filter text-muted me-2 small"></i>
+                <select id="filtreMois" class="form-select form-select-sm rounded-pill">
+                    <option value="all" {% if mois_select == "all" %}selected{% endif %}>Tous les mois</option>
+                    {% for m in liste_mois %}
+                        <option value="{{ m.id }}" {% if mois_select == m.id|stringformat:"s" %}selected{% endif %}>
+                            {{ m.nom }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="bg-light small text-uppercase text-muted">
+                    <tr>
+                        <th class="ps-4">Charge & Mode</th>
+                        <th>Montant Versé</th>
+                        <th>Date Paiement</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="corpsPaiements">
+                    {% for p in paiements_recents %}
+                    <tr class="ligne-paiement" data-mois="{{ p.date_paiement|date:'n' }}">
+                        <td class="ps-4">
+                            <span class="fw-bold text-dark d-block">{{ p.charge.libelle }}</span>
+                            <small class="text-muted"><i class="fas fa-info-circle me-1"></i>{{ p.mode_paiement }}</small>
+                        </td>
+                        <td>
+                            <span class="text-success fw-bold">+ {{ p.montant_verse }} FCFA</span>
+                        </td>
+                        <td class="text-muted small">
+                            {{ p.date_paiement|date:"d M Y" }}
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="btn-group">
+                               
+                                <a href="{% url 'inventaire:modifier_paiement' p.charge.id p.pk %}" class="btn btn-sm btn-light rounded-circle me-1" title="Modifier">
+                                    <i class="fas fa-pen text-primary"></i>
+                                </a>
+                                
+                                <a href="{% url 'inventaire:supprimer_paiement' p.pk %}" class="btn btn-sm btn-light rounded-circle" title="Annuler">
+                                    <i class="fas fa-times text-danger"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-muted">Aucun paiement enregistré pour le moment.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filtreMois = document.getElementById('filtreMois');
+    const lignes = document.querySelectorAll('.ligne-paiement');
+    const corpsPaiements = document.getElementById('corpsPaiements');
+
+    filtreMois.addEventListener('change', function() {
+        const moisSelectionne = this.value;
+        let resultatsTrouves = 0;
+
+        lignes.forEach(ligne => {
+            const moisLigne = ligne.getAttribute('data-mois');
+            
+            if (moisSelectionne === 'all' || moisLigne === moisSelectionne) {
+                ligne.style.display = ''; 
+                resultatsTrouves++;
+            } else {
+                ligne.style.display = 'none';
+            }
+        });
+
+        // Gestion du message "Aucun résultat"
+        const ancienMsg = document.getElementById('msg-vide-filtre');
+        if (ancienMsg) ancienMsg.remove();
+
+        if (resultatsTrouves === 0) {
+            const tr = document.createElement('tr');
+            tr.id = 'msg-vide-filtre';
+            tr.innerHTML = `<td colspan="4" class="text-center py-5 text-muted">
+                                <i class="fas fa-search fa-2x mb-2 opacity-25"></i><br>
+                                Aucun paiement trouvé pour ce mois.
+                            </td>`;
+            corpsPaiements.appendChild(tr);
+        }
+    });
+});
+</script>
+
+<style>
+    /* Design Premium SaaS */
+    .card { transition: transform 0.2s ease; }
+    .table thead th { font-size: 0.75rem; letter-spacing: 0.05rem; }
+    .btn-group .btn { padding: 0.25rem 0.5rem; }
+    .bg-primary { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%) !important; }
+    .table tbody tr:hover { background-color: rgba(0,0,0,0.01); }
+    .btn-light { background-color: #f8f9fa; border: none; }
+    .btn-light:hover { background-color: #e9ecef; }
+</style>
+-->
+
+
+
+
+
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h2 class="fw-bold text-dark mb-1">Gestion des Charges Fixes</h2>
+            <p class="text-muted mb-0">Suivi des dépenses structurelles de <span class="text-primary fw-bold">BEL'R</span></p>
+        </div>
+        <div class="col-auto">
+            <div class="card bg-primary text-white border-0 shadow-lg p-3 rounded-4">
+                <div class="d-flex align-items-center">
+                    <div class="me-3 bg-white bg-opacity-25 p-2 rounded-3">
+                        <i class="fas fa-hand-holding-usd fa-lg"></i>
+                    </div>
+                    <div>
+                        <small class="opacity-75 d-block">Dette totale (Reste à payer)</small>
+                        <h4 class="mb-0 fw-bold">{{ total_du }} FCFA</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-5 overflow-hidden">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
+            <h5 class="mb-0 text-danger fw-bold">
+                <i class="fas fa-clock me-2"></i>Charges en attente
+            </h5>
+            <a href="{% url 'inventaire:creer_charge' %}" class="btn btn-primary btn-sm rounded-pill px-4 shadow-sm">
+                <i class="fas fa-plus me-1"></i> Nouvelle charge
+            </a>
+        </div>
+        {% if has_charges_en_attente %}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr class="small text-uppercase text-muted">
+                            <th class="ps-4">Libellé & Type</th>
+                            <th>Échéance</th>
+                            <th>Montant Total</th>
+                            <th>Reste à payer</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for charge in charges_en_attente %}
+                        <tr>
+                            <td class="ps-4">
+                                <span class="fw-bold text-dark d-block">{{ charge.libelle }}</span>
+                                <span class="badge bg-light text-secondary border rounded-pill small">{{ charge.get_type_charge_display }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <i class="far fa-calendar-alt me-2 text-muted"></i>
+                                    {{ charge.date_echeance|date:"d M Y" }}
+                                </div>
+                            </td>
+                            <td class="text-dark">{{ charge.montant_total }} FCFA</td>
+                            <td>
+                                <span class="text-danger fw-bold">{{ charge.reste_a_payer }} FCFA</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group">
+                                    <a href="{% url 'inventaire:enregistrer_paiement' charge.id %}" class="btn btn-sm btn-success rounded-pill px-3 me-2 shadow-sm">
+                                        <i class="fas fa-wallet me-1"></i> Régler
+                                    </a>
+                                    <a href="{% url 'inventaire:modifier_charge' charge.id %}" class="btn btn-sm btn-outline-secondary border-0" title="Modifier la charge">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'inventaire:supprimer_charge' charge.id %}" class="btn btn-sm btn-outline-danger border-0" title="Supprimer la charge">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-check-circle fa-3x text-success mb-3 opacity-25"></i>
+                                    <p class="mb-0">Toutes vos charges sont réglées !</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state" style="text-align: center; padding: 40px; background: #f8f9fa; border: 1px dashed #dee2e6; border-radius: 4px; margin-top: 20px;">
+                <p style="margin: 0; color: #6c757d; font-size: 16px;">
+                    <i class="fa-solid fa-file-invoice-dollar me-2"></i>Aucune charge d'exploitation en attente pour le moment.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
+            <h5 class="mb-0 text-success fw-bold">
+                <i class="fas fa-history me-2"></i>Historique des paiements
+            </h5>
+            
+            <div class="d-flex align-items-center">
+                <i class="fas fa-filter text-muted me-2 small"></i>
+                <select id="filtreMois" class="form-select form-select-sm rounded-pill">
+                    <option value="all" {% if mois_select == "all" %}selected{% endif %}>Tous les mois</option>
+                    {% for m in liste_mois %}
+                        <option value="{{ m.id }}" {% if mois_select == m.id|stringformat:"s" %}selected{% endif %}>
+                            {{ m.nom }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        {% if has_paiements %}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="bg-light small text-uppercase text-muted">
+                        <tr>
+                            <th class="ps-4">Charge & Mode</th>
+                            <th>Montant Versé</th>
+                            <th>Preuve</th>
+                            <th>Date Paiement</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpsPaiements">
+                        {% for p in paiements_recents %}
+                        <tr class="ligne-paiement" data-mois="{{ p.date_paiement|date:'n' }}">
+                            <td class="ps-4">
+                                <span class="fw-bold text-dark d-block">{{ p.charge.libelle }}</span>
+                                <small class="text-muted"><i class="fas fa-info-circle me-1"></i>{{ p.mode_paiement }}</small>
+                            </td>
+                            <td>
+                                <span class="text-success fw-bold d-block">+ {{ p.montant_verse }} FCFA</span>
+                                <small class="text-muted small">Sur un total de : {{ p.charge.montant_total }} FCFA</small>
+                            </td>
+                            <td>
+                                {% if p.recu_image %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1 small" 
+                                            data-bs-toggle="modal" data-bs-target="#modalRecu{{ p.id }}">
+                                        <i class="fas fa-image me-1"></i> Voir le reçu
+                                    </button>
+
+                                    <div class="modal fade" id="modalRecu{{ p.id }}" tabindex="-1" aria-labelledby="modalRecuLabel{{ p.id }}" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content rounded-4 border-0 shadow">
+                                                <div class="modal-header border-0">
+                                                    <h6 class="modal-title fw-bold" id="modalRecuLabel{{ p.id }}">Reçu : {{ p.charge.libelle }}</h6>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body text-center p-2">
+                                                    <img src="{{ p.recu_image.url }}" alt="Preuve de paiement" class="img-fluid rounded-3 max-h-400">
+                                                </div>
+                                                {% if p.notes %}
+                                                <div class="modal-footer border-0 bg-light rounded-bottom-4 justify-content-start">
+                                                    <small class="text-muted"><strong>Note :</strong> {{ p.notes }}</small>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted small"><i class="fas fa-times-circle me-1 text-danger opacity-50"></i> Aucun</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted small">
+                                {{ p.date_paiement|date:"d M Y" }}
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group">
+                                    <a href="{% url 'inventaire:modifier_paiement' p.charge.id p.pk %}" class="btn btn-sm btn-light rounded-circle me-1" title="Modifier">
+                                        <i class="fas fa-pen text-primary"></i>
+                                    </a>
+                                    <a href="{% url 'inventaire:supprimer_paiement' p.pk %}" class="btn btn-sm btn-light rounded-circle" title="Annuler">
+                                        <i class="fas fa-times text-danger"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">Aucun paiement enregistré pour le moment.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                <div>
+                    <span class="text-muted">Page {{ paiements_recents.number }} sur {{ paiements_recents.paginator.num_pages }}</span>
+                </div>
+                <div class="pagination-buttons">
+                    {% if paiements_recents.has_previous %}
+                        <a href="?page_paiements={{ paiements_recents.previous_page_number }}&mois={{ mois_select }}&annee={{ annee_select }}" class="btn btn-sm btn-secondary" style="padding: 5px 10px; margin-right: 5px; text-decoration: none; background: #6c757d; color: white; border-radius: 4px;">Précédent</a>
+                    {% endif %}
+
+                    {% if paiements_recents.has_next %}
+                        <a href="?page_paiements={{ paiements_recents.next_page_number }}&mois={{ mois_select }}&annee={{ annee_select }}" class="btn btn-sm btn-primary" style="padding: 5px 10px; text-decoration: none; background: #8A2BE2; color: white; border-radius: 4px;">Suivant</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-state" style="text-align: center; padding: 40px; background: #f8f9fa; border: 1px dashed #dee2e6; border-radius: 4px; margin-top: 20px;">
+                <p style="margin: 0; color: #6c757d; font-size: 16px;">
+                    <i class="fa-solid fa-receipt me-2"></i>Aucun paiement enregistré pour cette période.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    const filtreMois = document.getElementById('filtreMois');
+
+    if (filtreMois) {
+        filtreMois.addEventListener('change', function() {
+            const moisSelectionne = this.value;
+            
+            // 1. Récupérer l'URL actuelle et ses paramètres
+            const url = new URL(window.location.href);
+            
+            // 2. On met à jour le paramètre 'mois'
+            url.searchParams.set('mois', moisSelectionne);
+            
+            // 3. CRITIQUE : On réinitialise toujours à la page 1 lors d'un changement de filtre
+            url.searchParams.set('page_paiements', '1');
+            
+            // 4. On recharge la page avec les nouveaux filtres pour que Django renvoie les bonnes données
+            window.location.href = url.toString();
+        });
+    }
+});
+</script>
+
+
+<style>
+    /* Design Premium SaaS */
+    .card { transition: transform 0.2s ease; }
+    .table thead th { font-size: 0.75rem; letter-spacing: 0.05rem; }
+    .btn-group .btn { padding: 0.25rem 0.5rem; }
+    .bg-primary { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%) !important; }
+    .table tbody tr:hover { background-color: rgba(0,0,0,0.01); }
+    .btn-light { background-color: #f8f9fa; border: none; }
+    .btn-light:hover { background-color: #e9ecef; }
+    .max-h-400 { max-height: 400px; object-fit: contain; width: 100%; }
+</style>
+{% endblock %}

@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block page_title %}Détail produit{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'liste_produits' %}">Inventaire</a></li>
+<li class="breadcrumb-item active">{{ produit.nom }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-5" style="background: #f8fafc; min-height: 100vh;">
+
+    <!-- HEADER -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h3 class="fw-bold mb-0 text-slate-800">{{ produit.nom }} | <span class="text-primary">BEL'R BI</span></h3>
+            <span class="badge bg-white text-dark border shadow-sm">Analyse approfondie du mois</span>
+        </div>
+
+        <div class="d-flex gap-2">
+            <form method="get" class="d-flex align-items-center bg-white rounded-pill px-3 py-1 shadow-sm border">
+                <select name="mois" onchange="this.form.submit()" class="form-select form-select-sm border-0 bg-transparent fw-bold text-primary">
+                    <option value="1" {% if mois_actuel == 1 %}selected{% endif %}>Janvier</option>
+                    <option value="2" {% if mois_actuel == 2 %}selected{% endif %}>Février</option>
+                    <option value="3" {% if mois_actuel == 3 %}selected{% endif %}>Mars</option>
+                    <option value="4" {% if mois_actuel == 4 %}selected{% endif %}>Avril</option>
+                    <option value="5" {% if mois_actuel == 5 %}selected{% endif %}>Mai</option>
+                    <option value="6" {% if mois_actuel == 6 %}selected{% endif %}>Juin</option>
+                    <option value="7" {% if mois_actuel == 7 %}selected{% endif %}>Juillet</option>
+                    <option value="8" {% if mois_actuel == 8 %}selected{% endif %}>Août</option>
+                    <option value="9" {% if mois_actuel == 9 %}selected{% endif %}>Septembre</option>
+                    <option value="10" {% if mois_actuel == 10 %}selected{% endif %}>Octobre</option>
+                    <option value="11" {% if mois_actuel == 11 %}selected{% endif %}>Novembre</option>
+                    <option value="12" {% if mois_actuel == 12 %}selected{% endif %}>Décembre</option>
+                </select>
+                <input type="number" name="annee" value="{{ annee_actuel }}" onchange="this.form.submit()" class="form-control form-control-sm border-0 bg-transparent fw-bold text-primary" style="width: 80px;">
+            </form>
+            <a href="{% url 'inventaire:liste_produit_bi' %}" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm">
+                <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI ROW : Ventes, Conso Manuelle & Impact -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm p-3 rounded-4 bg-white text-center">
+                <small class="text-muted text-uppercase fw-bold d-block" style="font-size: .65rem;">Volume Services</small>
+                <h3 class="fw-bold mb-0 mt-2">{{ nb_prestations }}</h3>
+                <span class="badge {% if evo_service >= 0 %}bg-success-soft text-success{% else %}bg-danger-soft text-danger{% endif %} small mt-1">
+                    {{ evo_service|floatformat:2 }}% vs M-1
+                </span>
+            </div>
+        </div>
+
+        <!-- NOUVEAU KPI: CONSO MANUELLE (Sorties hors ventes) -->
+        <div class="col-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm p-3 rounded-4 bg-white text-center border-bottom border-warning border-4">
+                <small class="text-muted text-uppercase fw-bold d-block" style="font-size: .65rem;">Conso Manuelle</small>
+                <h3 class="fw-bold mb-0 mt-2 text-warning">{{ conso_manuelle|floatformat:1 }} <small style="font-size: 0.8rem;">{{ produit.unite_mesure }}</small></h3>
+                <span class="badge {% if evo_manuelle > 0 %}bg-danger-soft text-danger{% else %}bg-success-soft text-success{% endif %} small mt-1">
+                    {{ evo_manuelle|floatformat:2 }}% vs M-1
+                </span>
+                <small class="text-muted small">Hors dosage technique</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm p-3 rounded-4 bg-white text-center border-start border-primary border-4">
+                <small class="text-muted text-uppercase fw-bold d-block" style="font-size: .65rem;">Impact / Client</small>
+                <h3 class="fw-bold mb-0 mt-2 text-primary">{{ impact_reel|floatformat:1 }} F</h3>
+                <small class="{% if ecart_impact > 0 %}text-danger{% else %}text-success{% endif %} fw-bold">
+                    Écart: {{ ecart_impact|floatformat:0 }} F
+                </small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm p-3 rounded-4 bg-gradient-premium text-white text-center">
+                <small class="text-white-50 text-uppercase fw-bold d-block" style="font-size: .65rem;">Valeur Stock Physique</small>
+                <h3 class="fw-bold mb-0 mt-2">{{ valeur_stock|floatformat:0 }} F</h3>
+                <small class="text-white-50">{{ stock_reel|floatformat:2 }} {{ produit.unite_mesure }} dispo.</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <!-- ANALYSE DES SERVICES LIÉS -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white py-3 border-0">
+                    <h6 class="mb-0 fw-bold"><i class="fas fa-chart-pie me-2 text-primary"></i>Analyse du dosage par Service</h6>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="bg-light text-uppercase" style="font-size: 0.7rem;">
+                            <tr>
+                                <th class="ps-4">Service</th>
+                                <th class="text-center">Dosage Unitaire</th>
+                                <th class="text-center">Coût Mensuel</th>
+                                <th class="text-end pe-4">Poids / CA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in recettes %}
+                            <tr>
+                                <td class="ps-4">
+                                    <span class="fw-bold text-dark d-block">{{ r.service.nom }}</span>
+                                    <small class="text-muted">{{ r.service.categorie }}</small>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge rounded-pill bg-info-soft text-info px-3">
+                                        {{ r.dosage_bi_affiche|floatformat:3 }} {{ produit.unite_mesure }}
+                                    </span>
+                                </td>
+                                <td class="text-center fw-bold text-slate-700">{{ r.cout_mensuel_total|floatformat:0 }} F</td>
+                                <td class="text-end pe-4">
+                                    <div class="d-flex align-items-center justify-content-end">
+                                        <div class="progress me-2" style="width: 40px; height: 4px;">
+                                            <div class="progress-bar" role="progressbar" style="width: {{ r.prorata_individuel }}%"></div>
+                                        </div>
+                                        <span class="fw-bold text-primary">{{ r.prorata_individuel|floatformat:2 }}%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center py-4 text-muted">Aucun service lié à ce produit.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- HISTORIQUE DES MOUVEMENTS MANUELS -->
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold text-secondary">Historique des saisies manuelles</h6>
+                    <span class="badge bg-light text-muted fw-normal">Ce mois uniquement</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0 table-hover">
+                        <thead class="bg-light" style="font-size: 0.75rem;">
+                            <tr>
+                                <th class="ps-4">Date & Heure</th>
+                                <th>Type</th>
+                                <th>Quantité</th>
+                                <th>Opérateur</th>
+                                <th class="text-end pe-4">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mv in historique_mois %}
+                            {% if not mv.is_automatique %} {# On ne montre que le manuel ici #}
+                           <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold text-dark">{{ mv.date_mouvement|date:"d F Y" }}</div>
+                                    <div class="text-muted small">{{ mv.date_mouvement|date:"H:i" }}</div>
+                                </td>
+                                <td>
+                                    {% if mv.type_mouvement == 'ENTREE' %}
+                                    <span class="badge bg-success-soft text-success"><i class="fas fa-arrow-down me-1"></i> Entrée</span>
+                                    {% else %}
+                                    <span class="badge bg-danger-soft text-danger"><i class="fas fa-arrow-up me-1"></i> Sortie</span>
+                                    {% endif %}
+                                </td>
+                                
+                                <td class="fw-bold text-dark">
+                                    {{ mv.quantite_a_afficher|stringformat:'.2f' }} {{ produit.unite_mesure }}
+                                    
+                                    {% if mv.prix_total_achat %}
+                                        <div class="text-success small" style="font-size: 0.7rem;">+{{ mv.prix_total_achat|floatformat:0 }}F</div>
+                                    {% endif %}
+                                    
+                                    {# Si c'est une sortie manuelle, on affiche aussi le reste saisi pour que le gérant s'y retrouve #}
+                                    {% if mv.type_mouvement == 'SORTIE' and not mv.is_automatique %}
+                                        <div class="text-muted text-nowrap" style="font-size: 0.65rem; font-weight: normal;">
+                                            <i class="fas fa-calculator me-1"></i>(Reste en rayon : {{ mv.quantite|stringformat:'.2f' }} {{ produit.unite_mesure }})
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                
+                                <td>    
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-light rounded-circle p-2 me-2">
+                                            <i class="fas fa-user-circle text-secondary"></i>
+                                        </div>
+                                        <span class="small fw-semibold">
+                                            {% if mv.created_by %}{{ mv.created_by.username }}{% else %}Admin{% endif %}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a href="{% url 'inventaire:modifier_mouvement' mv.id %}" class="btn btn-sm btn-outline-light border text-primary rounded-circle">
+                                        <i class="fas fa-pen"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIDEBAR -->
+        <div class="col-lg-4">
+            <!-- COMPARAISON STOCKS & CONSO THÉORIQUE -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+                <div class="card-header bg-dark py-3">
+                    <h6 class="text-white mb-0 small fw-bold text-uppercase">Bilan Consommation</h6>
+                </div>
+                <div class="card-body">
+                    <div class="p-3 rounded-4 bg-light mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small text-muted fw-bold">CONSO. THÉORIQUE</span>
+                            <span class="badge bg-white text-primary border shadow-sm">{{ conso_theo|floatformat:2 }} {{ produit.unite_mesure }}</span>
+                        </div>
+                        <!-- % CONSO THÉORIQUE VS MOIS PRÉCÉDENT -->
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small text-muted fw-bold">ÉVOLUTION THÉO. M-1</span>
+                            <span class="badge {% if evo_conso_theo_prec > 0 %}bg-danger-soft text-danger{% else %}bg-success-soft text-success{% endif %} border shadow-sm">
+                                {{ evo_conso_theo_prec|floatformat:1 }}%
+                            </span>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="text-center mt-2">
+                            <div class="small text-muted mb-1">Écart Brut (Théo - Manuel)</div>
+                            <h4 class="fw-black {% if ecart_conso_brut < 0 %}text-danger{% else %}text-success{% endif %} mb-0">
+                                {{ ecart_conso_brut|floatformat:1 }} {{ produit.unite_mesure }}
+                            </h4>
+                            <small class="text-muted">Volume de différence</small>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small text-muted">Stock Théorique (calculé) :</span>
+                        <span class="fw-bold">{{ stock_theorique|floatformat:2 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-4">
+                        <span class="small text-muted">Stock Réel (physique) :</span>
+                        <span class="fw-bold text-success">{{ stock_reel|floatformat:2 }}</span>
+                    </div>
+
+                    <div class="p-3 rounded-3 bg-danger-soft border border-danger border-opacity-10">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="d-block text-danger fw-bold text-uppercase" style="font-size: 0.6rem;">Seuil d'alerte</small>
+                                <span class="h5 fw-bold text-danger mb-0">{{ produit.seuil_alerte }}</span>
+                            </div>
+                            <div class="text-end">
+                                <small class="d-block text-muted" style="font-size: 0.6rem;">Stock initial (01/{{ mois_actuel }})</small>
+                                <span class="fw-bold text-dark">{{ stock_debut_mois|floatformat:2 }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRORATA / PERFORMANCE -->
+            <div class="card border-0 shadow-sm rounded-4 bg-gradient-premium text-white">
+                <div class="card-body">
+                    <h6 class="text-white-50 small fw-bold text-uppercase mb-4">Rentabilité Produit</h6>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div>
+                            <small class="text-white-50 d-block">Prorata Théo.</small>
+                            <span class="h4 fw-bold mb-0">{{ prorata_theo|floatformat:2 }}%</span>
+                        </div>
+                        <div class="vr opacity-25"></div>
+                        <div>
+                            <small class="text-white-50 d-block">Prorata Réel</small>
+                            <span class="h4 fw-bold mb-0 text-warning">{{ prorata_reel|floatformat:2 }}%</span>
+                        </div>
+                    </div>
+                    <div class="progress bg-white bg-opacity-25" style="height: 6px;">
+                        <div class="progress-bar bg-warning" style="width: {{ prorata_reel }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-gradient-premium { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }
+    .bg-success-soft { background: #f0fdf4; color: #16a34a; }
+    .bg-danger-soft { background: #fef2f2; color: #dc2626; }
+    .bg-primary-soft { background: #eef2ff; color: #4f46e5; }
+    .bg-info-soft { background: #ecfeff; color: #0891b2; }
+    .fw-black { font-weight: 900; }
+    .table-hover tbody tr:hover { background-color: #f1f5f9 !important; transition: 0.2s; }
+</style>
+{% endblock %}
+
+

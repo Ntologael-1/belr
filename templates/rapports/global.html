@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+
+{% block title %}Rapports & Statistiques{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-chart-pie me-2"></i>Rapports & Statistiques
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+<li class="breadcrumb-item active">Rapports</li>
+{% endblock %}
+
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    :root {
+        --primary: #6366f1;
+        --primary-soft: #eef2ff;
+        --success: #10b981;
+        --danger: #f43f5e;
+        --warning: #f59e0b;
+        --dark: #1e293b;
+        --body-bg: #f8fafc;
+    }
+
+    body { font-family: 'Inter', sans-serif; background-color: var(--body-bg); }
+    .rapport-container { padding: 2rem; max-width: 1600px; margin: 0 auto; }
+
+    /* Cards Premium */
+    .premium-card {
+        background: white;
+        border-radius: 24px;
+        padding: 1.5rem;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        height: 100%;
+        transition: transform 0.2s ease;
+    }
+
+    .kpi-card { position: relative; overflow: hidden; }
+    .kpi-icon {
+        width: 48px; height: 48px; border-radius: 14px;
+        display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+    .bg-soft-primary { background-color: var(--primary-soft); }
+    .bg-soft-danger { background-color: #fee2e2; }
+    .bg-soft-success { background-color: #dcfce7; }
+
+    /* Fix pour l'étirement des graphiques */
+    .chart-wrapper {
+        position: relative;
+        width: 100%;
+        height: 300px;
+        margin-top: 1rem;
+    }
+
+    /* Table Design */
+    .custom-table thead th {
+        background-color: #f1f5f9;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        color: #64748b;
+        padding: 1rem;
+        border: none;
+    }
+    .custom-table tbody td { padding: 1.25rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+
+    .avatar-init {
+        width: 40px; height: 40px; border-radius: 12px;
+        background: var(--primary); color: white;
+        display: flex; align-items: center; justify-content: center; font-weight: 700;
+    }
+
+    .badge-soft { padding: 0.4rem 0.8rem; border-radius: 8px; font-weight: 600; font-size: 0.8rem; }
+    .badge-soft-success { background: #dcfce7; color: #15803d; }
+    .badge-soft-danger { background: #fee2e2; color: #b91c1c; }
+</style>
+
+<div class="rapport-container">
+
+
+
+
+
+
+
+
+    <a href="{% url 'rapports:dashboard_bi' %}" 
+       class="d-flex align-items-center justify-content-between px-3 py-2 rounded-3 text-decoration-none transition-all
+              {% if request.resolver_match.url_name == 'dashboard_bi' %}bg-dark text-white fw-semibold shadow-sm{% else %}text-secondary bg-transparent hover-bg-light{% endif %}"
+       style="font-size: 0.85rem;">
+        <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-chart-line-up {% if request.resolver_match.url_name == 'dashboard_bi' %}text-success{% else %}text-muted{% endif %}" style="width: 18px;"></i>
+            <span>Décisionnel BI</span>
+        </div>
+        <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle px-2 py-0.5 font-monospace" style="font-size: 0.65rem;">PRO</span>
+    </a>
+
+
+
+
+
+
+
+
+    <div class="col-12 col-md-4 mb-4">
+        <div class="card border-0 shadow-sm p-4" style="background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(8px); border-radius: 16px; border: 1px solid rgba(230, 233, 240, 0.6);">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="icon-shape" style="width: 48px; height: 48px; background: rgba(214, 42, 91, 0.05); color: #D42A5B; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 1.2rem;">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold text-dark mb-0">Rapport Annuel</h5>
+                    <span class="text-muted small">Analyse & Effet Ciseau</span>
+                </div>
+            </div>
+            <p class="text-muted small mb-3">Comparez les performances de cette année avec l'exercice précédent et surveillez l'évolution de vos marges.</p>
+            <a href="{% url 'rapports:rapport_annuel' %}" class="btn w-100 fw-semibold" style="background: linear-gradient(135deg, #FF6B8B 0%, #D42A5B 100%); color: white; border-radius: 10px; border: none; padding: 0.6rem;">
+                Ouvrir l'Analyse <i class="fas fa-arrow-right ms-2" style="font-size: 0.8rem;"></i>
+            </a>
+        </div>
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    <!-- HEADER & FILTRES -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-5 gap-3">
+        <div>
+            <h1 class="fw-800 text-dark mb-1">Rapport de Performance <span class="text-primary">BEL'R</span></h1>
+            <p class="text-muted mb-0"><i class="far fa-calendar-alt me-2"></i>Analyse globale : {{ period.month_name|capfirst }} {{ period.year }}</p>
+        </div>
+
+        <div class="d-flex gap-3 align-items-center flex-wrap">
+            <a href="{% url 'historique_create' %}" class="btn btn-outline-primary rounded-3 px-3 d-flex align-items-center shadow-sm bg-white">
+                <i class="fas fa-chart-pie me-2"></i>
+                <span class="fw-bold">Graph Analytics</span>
+            </a>
+            
+            <form method="GET" class="d-flex gap-2 bg-white p-2 rounded-4 shadow-sm border">
+                <select name="month" class="form-select border-0 bg-light rounded-3 fw-semibold">
+                    {% for m_id, m_name in months %}
+                        <option value="{{ m_id }}" {% if m_id == period.month %}selected{% endif %}>{{ m_name|capfirst }}</option>
+                    {% endfor %}
+                </select>
+                <select name="year" class="form-select border-0 bg-light rounded-3 fw-semibold">
+                    {% for y in years %}
+                        <option value="{{ y }}" {% if y == period.year %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary rounded-3 px-4 fw-bold">Filtrer</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- BLOCS KPI GLOBAUX -->
+    <div class="row g-4 mb-5">
+        <!-- Chiffre d'Affaires Brut -->
+        <div class="col-md-6 col-xl-3">
+            <div class="premium-card kpi-card border-bottom border-primary border-5">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="kpi-icon bg-soft-primary text-primary"><i class="fas fa-wallet"></i></div>
+                    <span class="badge-soft {% if kpi.evolution >= 0 %}badge-soft-success{% else %}badge-soft-danger{% endif %}">
+                        {% if kpi.evolution >= 0 %}+{% endif %}{{ kpi.evolution }}%
+                    </span>
+                </div>
+                <h6 class="text-muted fw-bold small text-uppercase mb-1">Chiffre d'Affaires Brut</h6>
+                <h2 class="fw-800 mb-0">{{ kpi.ca_brut|floatformat:0 }} <small class="fs-6 fw-normal text-muted">FCFA</small></h2>
+                <small class="text-muted">Mois préc. : {{ kpi.ca_prev|floatformat:0 }} FCFA</small>
+            </div>
+        </div>
+
+       <!-- Dépenses & Coûts Globaux -->
+        <div class="col-md-6 col-xl-3">
+            <div class="premium-card kpi-card border-bottom border-danger border-5">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="kpi-icon bg-soft-danger text-danger"><i class="fas fa-file-invoice-dollar"></i></div>
+                    <span class="badge-soft badge-soft-danger">
+                        Effort : {{ kpi.taux_effort }}%
+                    </span>
+                </div>
+                <h6 class="text-muted fw-bold small text-uppercase mb-1">Dépenses Globales</h6>
+                <h2 class="fw-800 mb-2 text-danger">{{ kpi.total_depenses_globales|floatformat:0 }} <small class="fs-6 fw-normal text-muted">FCFA</small></h2>
+                
+                <!-- Petit breakdown discret -->
+                <div class="pt-2 border-top border-light" style="font-size: 0.8rem;">
+                    <div class="d-flex justify-content-between text-muted mb-1">
+                        <span><i class="fas fa-users me-1"></i> Masse salariale :</span>
+                        <span class="fw-bold text-dark">{{ kpi.masse_salariale|floatformat:0 }} FCFA</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CA Net (Profit Salon) -->
+        <div class="col-md-6 col-xl-3">
+            <div class="premium-card kpi-card {% if kpi.ca_net >= 0 %}bg-success{% else %}bg-danger{% endif %} text-white">
+                <div class="kpi-icon bg-white {% if kpi.ca_net >= 0 %}text-success{% else %}text-danger{% endif %}"><i class="fas fa-chart-line"></i></div>
+                <h6 class="text-white-50 fw-bold small text-uppercase mb-1">CA Net (Profit Réel)</h6>
+                <h2 class="fw-800 mb-0 text-white">{{ kpi.ca_net|floatformat:0 }} <small class="fs-6 fw-normal text-white-50">FCFA</small></h2>
+                <small class="text-white-50">Bénéfice net après déductions</small>
+            </div>
+        </div>
+
+        <!-- Ventes Packs -->
+        <div class="col-md-6 col-xl-3">
+            <div class="premium-card kpi-card border-bottom border-warning border-5">
+                <div class="kpi-icon bg-light text-warning"><i class="fas fa-star"></i></div>
+                <h6 class="text-muted fw-bold small text-uppercase mb-1">Ventes de Packs</h6>
+                <h2 class="fw-800 mb-0">{{ kpi.ca_packs_percent }}%</h2>
+                <small class="text-muted">Part du CA brut global</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRAPHIQUE ET TOP SERVICES -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-8">
+            <div class="premium-card">
+                <h5 class="fw-800 mb-4">Tendance des Revenus</h5>
+                <div class="chart-wrapper">
+                    <canvas id="mainTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="premium-card">
+                <h5 class="fw-800 mb-4">Top Services (Popularité)</h5>
+                {% for s in top_services %}
+                <div class="d-flex align-items-center mb-3 p-2 bg-light rounded-3">
+                    <div class="avatar-init me-3" style="background: var(--dark); width: 32px; height: 32px; font-size: 0.8rem;">{{ forloop.counter }}</div>
+                    <div class="flex-grow-1">
+                        <p class="mb-0 fw-bold small">{{ s.services__nom }}</p>
+                        <small class="text-muted">{{ s.volume }} actes réalisés</small>
+                    </div>
+                    <div class="fw-800 text-primary small">{{ s.total_ca|floatformat:0 }} FCFA</div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center py-4">Aucune donnée disponible pour ce mois.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLEAU EMPLOYES -->
+    <div class="premium-card p-0 overflow-hidden">
+        <div class="p-4 d-flex justify-content-between align-items-center border-bottom">
+            <h5 class="fw-800 mb-0">Performance & Rémunération des Employés</h5>
+            <span class="badge bg-soft-primary text-primary rounded-pill px-3">{{ stats_employes|length }} Collaborateurs</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table custom-table mb-0">
+                <thead>
+                    <tr>
+                        <th class="ps-4">Employé</th>
+                        <th class="text-center">CA Généré</th>
+                        <th class="text-center">Salaire Fixe</th>
+                        <th class="text-center">Bonus (Paliers)</th>
+                        <th class="text-center">Coût Total (Masse Salariale)</th>
+                        <th class="text-end pe-4">Rentabilité / Employé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in stats_employes %}
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-init me-3">{{ item.employe.nom_complet|slice:":1" }}</div>
+                                <div>
+                                    <p class="mb-0 fw-800 text-dark">{{ item.employe.nom_complet }}</p>
+                                    <small class="text-muted">{{ item.employe.specialite|default:"Collaborateur" }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center fw-bold">{{ item.ca_genere|floatformat:0 }} FCFA</td>
+                        <td class="text-center text-muted">{{ item.salaire_fixe_historique|floatformat:0 }} FCFA</td>
+                        <td class="text-center text-success fw-bold">+ {{ item.bonus|floatformat:0 }} FCFA</td>
+                        <td class="text-center fw-800 text-dark">{{ item.salaire_total|floatformat:0 }} FCFA</td>
+                        <td class="text-end pe-4">
+                            <span class="badge-soft {% if item.rentabilite > 0 %}badge-soft-success{% else %}badge-soft-danger{% endif %}">
+                                {{ item.rentabilite|floatformat:0 }} FCFA
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">Aucun employé actif trouvé pour cette période.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- CHARTS.JS SCRIPT -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('mainTrendChart').getContext('2d');
+    
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(99, 102, 241, 0.3)');
+    gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ chart_days|safe }},
+            datasets: [{
+                label: 'Revenu Journalier (FCFA)',
+                data: {{ chart_amounts|safe }},
+                borderColor: '#6366f1',
+                borderWidth: 4,
+                tension: 0.4,
+                fill: true,
+                backgroundColor: gradient,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: '#6366f1',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    titleFont: { size: 14, weight: 'bold' },
+                    padding: 12,
+                    displayColors: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#f1f5f9', drawBorder: false },
+                    ticks: { color: '#94a3b8', font: { size: 11 } }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#94a3b8', font: { size: 11 } }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

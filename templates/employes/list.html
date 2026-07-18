@@ -1,0 +1,354 @@
+{% extends 'base.html' %}
+
+{% load auth_extras %}
+
+{% block title %}Coiffeurs - Équipe{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-user-tie me-2"></i>Notre Équipe de Coiffeurs
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+<li class="breadcrumb-item active">Coiffeurs</li>
+{% endblock %}
+
+{% block content %}
+
+
+<!-- Barre de recherche et actions -->
+{% csrf_token %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="input-group shadow-sm">
+            <span class="input-group-text bg-white border-end-0">
+                <i class="fas fa-search text-muted"></i>
+            </span>
+            <input type="text" class="form-control border-start-0" id="searchEmployes" 
+                   placeholder="Rechercher un coiffeur...">
+            
+            <!-- Filtrage par statut (Actifs par défaut si rien n'est spécifié) -->
+            <select class="form-select" id="filterStatut" style="max-width: 200px;">
+                <option value="actifs" {% if statut == 'actifs' or not statut %}selected{% endif %}>Actifs</option>
+                <option value="inactifs" {% if statut == 'inactifs' %}selected{% endif %}>Inactifs</option>
+                <option value="tous" {% if statut == 'tous' %}selected{% endif %}>Tous les statuts</option>
+            </select>
+        </div>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'employe_create' %}" class="btn btn-primary shadow-sm">
+            <i class="fas fa-user-plus me-1"></i> Nouveau Coiffeur
+        </a>
+    </div>
+</div>
+
+<!-- Zone de récupération du lien d'activation (SaaS Premium Alert Box) -->
+{% if lien_valeur %}
+    <div id="bandeau-activation" class="row mb-4 animate__animated animate__fadeIn" style="transition: all 0.6s ease-in-out;">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-light-success">
+                <div class="card-body p-3 border-start border-success border-4 rounded-end d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-success bg-opacity-10 text-success p-2 rounded-circle">
+                            <i class="fas fa-key fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold text-success mb-0">Nouveau lien d'accès généré !</h6>
+                            <small class="text-muted">
+                                Rôle associé : <span class="badge bg-secondary text-capitalize">{{ lien_role|default:"Coiffeur" }}</span>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="input-group style-copy-group" style="max-width: 500px;">
+                        <input type="text" class="form-control form-control-sm bg-white" id="lienInput" value="{{ lien_valeur }}" readonly>
+                        <button class="btn btn-success btn-sm" type="button" onclick="copierLien()">
+                            <i class="fas fa-copy me-1"></i> Copier
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Grille des statistiques existante -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card p-3 bg-white rounded shadow-sm h-100">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary p-3 rounded me-3">
+                    <i class="fas fa-user-tie fa-2x"></i>
+                </div>
+                <div>
+                    <h3 class="stat-value mb-0 fw-bold">{{ employes_perf|length }}</h3>
+                    <p class="text-muted small mb-0">Équipe BEL'R</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card p-3 bg-white rounded shadow-sm h-100">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-success bg-opacity-10 text-success p-3 rounded me-3">
+                    <i class="fas fa-chart-line fa-2x"></i>
+                </div>
+                <div>
+                    <h3 class="stat-value mb-0 fw-bold">{{ selected_month }}/{{ selected_year }}</h3>
+                    <p class="text-muted small mb-0">Période d'analyse</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card p-3 bg-white rounded shadow-sm h-100">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-info bg-opacity-10 text-info p-3 rounded me-3">
+                    <i class="fas fa-wallet fa-2x"></i>
+                </div>
+                <div>
+                    <h3 class="stat-value mb-0 fw-bold">Bonus actif</h3>
+                    <p class="text-muted small mb-0">Calcul automatique</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card p-3 bg-white rounded shadow-sm h-100">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning p-3 rounded me-3">
+                    <i class="fas fa-star fa-2x"></i>
+                </div>
+                <div>
+                    <h3 class="stat-value mb-0 fw-bold">Top Performance</h3>
+                    <p class="text-muted small mb-0">Suivi mensuel</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grille des employés -->
+<div class="row g-4" id="employesGrid">
+    {% for item in employes_perf %}
+    <div class="col-xl-4 col-lg-6 employe-item">
+        <div class="coiffeur-card stat-card bg-white p-4 rounded shadow-sm h-100 position-relative">
+            {% if request.user|is_manager_or_above %} 
+                <!-- Toggle d'activité corrigé -->
+                <div class="form-check form-switch position-absolute top-0 end-0 mt-3 me-3">
+                    <input class="form-check-input cursor-pointer" type="checkbox" 
+                        id="switch-{{ item.info.id }}" 
+                        {% if item.info.actif %}checked{% endif %}
+                        onchange="toggleStatut(this, '{% url 'toggle_employe_status' item.info.pk %}')">
+                </div>
+            {% endif %}
+
+            <div class="d-flex align-items-center mb-4">
+                <div class="avatar-md me-3">
+                    {% if item.info.photo %}
+                    <img src="{{ item.info.photo.url }}" class="rounded-circle border" 
+                         style="width: 70px; height: 70px; object-fit: cover;">
+                    {% else %}
+                    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center border" 
+                         style="width: 70px; height: 70px;">
+                        <i class="fas fa-user-tie fa-2x text-secondary"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0">{{ item.info.nom_complet }}</h5>
+                    <div class="mt-1 d-flex gap-1 flex-wrap align-items-center">
+                        <!-- Rôle affiché dynamiquement (Gérant, Coiffeur, etc.) -->
+                        <span class="badge bg-light text-dark border" style="font-size: 0.65rem;">
+                            <i class="fas fa-id-badge me-1 text-muted"></i>{{ item.info.user.groups.all.first.name|default:"Coiffeur"|upper }}
+                        </span>
+                        <!-- AJUSTEMENT : Nom d'utilisateur à la place de la spécialité -->
+                        <span class="badge bg-light text-primary border font-monospace" style="font-size: 0.65rem; font-weight: 600;">
+                            <i class="fas fa-user me-1 text-muted"></i>@{{ item.info.user.username }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistiques de performance -->
+            {% if request.user|is_manager_or_above %} 
+                <div class="perf-stats row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="p-2 bg-light rounded text-center">
+                            <small class="text-muted d-block">CA Mois</small>
+                            <span class="fw-bold text-primary">{{ item.ca_genere|floatformat:0 }} FCFA</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 bg-light rounded text-center">
+                            <small class="text-muted d-block">Rentabilité</small>
+                            <span class="fw-bold {% if item.rentabilite > 0 %}text-success{% else %}text-danger{% endif %}">
+                                {{ item.rentabilite|floatformat:0 }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Détails financiers -->
+                <div class="coiffeur-info text-start small border-top pt-3 mt-2">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Salaire Fixe:</span>
+                        <span class="fw-bold">{{ item.info.salaire_base|floatformat:0 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Bonus débloqué:</span>
+                        <span class="text-success fw-bold">+ {{ item.bonus|floatformat:0 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between border-top pt-2">
+                        <span class="fw-bold">Salaire Total:</span>
+                        <span class="text-dark fw-bold" style="font-size: 1rem;">{{ item.salaire_total|floatformat:0 }} FCFA</span>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Liens d'action dynamiques -->
+            <div class="d-flex justify-content-center gap-2 mt-4 pt-2">
+                <a href="{% url 'rapports:rapport_coiffeur_detail' item.info.pk %}" class="btn btn-sm btn-outline-primary w-100" title="Voir profil">
+                    <i class="fas fa-chart-pie me-1"></i> Performance
+                </a>
+                {% if request.user|is_manager_or_above %} 
+                    <!-- AFFICHE UNIQUEMENT si le compte de l'utilisateur n'est pas encore actif -->
+                    {% if not item.info.user.is_active %}
+                    <a href="{% url 'regenerer_lien_activation' item.info.pk %}" class="btn btn-sm btn-outline-success" title="Envoyer et régénérer le lien d'accès">
+                        <i class="fas fa-key"></i>
+                    </a>
+                    {% endif %}
+                    {% if request.user|has_group:"Gérant" %}
+                        <a href="{% url 'employe_edit' item.info.pk %}" class="btn btn-sm btn-outline-warning" title="Modifier">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <i class="fas fa-users-slash fa-4x text-muted mb-3"></i>
+        <p class="fs-5 text-muted">Aucun employé trouvé.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .coiffeur-card {
+        border-radius: 15px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .coiffeur-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+    }
+    .bg-light-success { background-color: #f1fbf7; border: 1px solid #d1f2e5; }
+    .text-success { color: #148557 !important; }
+</style>
+
+<script>
+    // 1. Filtrage dynamique en temps réel via la recherche
+    document.getElementById('searchEmployes').addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll('.employe-item').forEach(item => {
+            const text = item.innerText.toLowerCase();
+            item.style.display = text.includes(term) ? 'block' : 'none';
+        });
+    });
+
+    // 2. Modification du filtrage par statut pour recharger la page
+    document.getElementById('filterStatut').addEventListener('change', function() {
+        const val = this.value;
+        const currentUrl = new URL(window.location.href);
+        
+        if (val && val !== 'tous') {
+            currentUrl.searchParams.set('statut', val);
+        } else if (val === 'tous') {
+            currentUrl.searchParams.set('statut', 'tous');
+        } else {
+            currentUrl.searchParams.delete('statut');
+        }
+        window.location.href = currentUrl.toString();
+    });
+
+    // 3. JavaScript pratique pour copier le lien d'un clic
+    function copierLien() {
+        var copyText = document.getElementById("lienInput");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(copyText.value);
+        
+        const btn = document.querySelector('.style-copy-group button');
+        const oldHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Copié !';
+        btn.className = 'btn btn-success btn-sm';
+        setTimeout(() => { 
+            btn.innerHTML = oldHtml; 
+            btn.className = 'btn btn-primary btn-sm';
+        }, 2000);
+    }
+
+    // 4. CORRECTION : Ta vraie logique AJAX pour le Switch d'activité
+    function toggleStatut(checkbox, url) {
+        checkbox.disabled = true;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            }
+        })
+        .then(response => {
+            if (response.ok || response.status === 403) {
+                return response.json();
+            }
+            throw new Error("Erreur technique du serveur");
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                console.log("BEL'R BDD synchronisée :", data.message);
+            } 
+            else if (data.status === 'denied') {
+                checkbox.checked = !checkbox.checked;
+                alert(data.message);
+            } 
+            else {
+                checkbox.checked = !checkbox.checked;
+                alert("Une erreur est survenue lors de la mise à jour.");
+            }
+        })
+        .catch(error => {
+            console.error("Erreur Fetch:", error);
+            checkbox.checked = !checkbox.checked;
+            alert("Impossible de joindre la base de données de BEL'R.");
+        })
+        .finally(() => {
+            checkbox.disabled = false;
+        });
+    }
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const bandeau = document.getElementById("bandeau-activation");
+        
+        if (bandeau) {
+            setTimeout(function() {
+                bandeau.style.opacity = "0";
+                bandeau.style.transform = "translateY(-10px)";
+                
+                setTimeout(function() {
+                    bandeau.remove(); 
+                }, 600);
+                
+            }, 30000); 
+        }
+    });
+</script>
+{% endblock %}

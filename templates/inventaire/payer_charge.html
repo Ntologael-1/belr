@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+<!--
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-lg rounded-4">
+                <div class="card-header bg-primary text-white py-3 rounded-top-4">
+                    <h4 class="mb-0">Régler : {{ charge.libelle }}</h4>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-info border-0 rounded-4">
+                        <div class="d-flex justify-content-between">
+                            <span>Montant total :</span>
+                            <span class="fw-bold">{{ charge.montant_total }} FCFA</span>
+                        </div>
+                        <div class="d-flex justify-content-between text-danger">
+                            <span>Reste à payer :</span>
+                            <span class="fw-bold">{{ charge.reste_a_payer }} FCFA</span>
+                        </div>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Montant à verser</label>
+                            {{ form.montant_verse }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Mode de paiement</label>
+                            {{ form.mode_paiement }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Notes / Référence</label>
+                            {{ form.notes }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Preuve (Optionnel)</label>
+                            {{ form.recu_image }}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg rounded-pill">Valider le paiement</button>
+                            <a href="{% url 'inventaire:liste_charges' %}" class="btn btn-light rounded-pill">Retour</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+-->
+
+
+
+<!-- 
+
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-lg rounded-4">
+                
+                <div class="card-header {% if edit_mode %}bg-warning text-dark{% else %}bg-primary text-white{% endif %} py-3 rounded-top-4">
+                    <h4 class="mb-0">
+                        <i class="fas {% if edit_mode %}fa-edit{% else %}fa-wallet{% endif %} me-2"></i>
+                        {% if edit_mode %}Modifier le paiement : {{ charge.libelle }}{% else %}Régler : {{ charge.libelle }}{% endif %}
+                    </h4>
+                </div>
+
+                <div class="card-body p-4">
+                 
+                    <div class="alert alert-info border-0 rounded-4 shadow-sm mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Montant total de la charge :</span>
+                            <span class="fw-bold">{{ charge.montant_total }} FCFA</span>
+                        </div>
+                        
+                        {% if not edit_mode %}
+              
+                        <div class="d-flex justify-content-between text-danger">
+                            <span>Reste à payer actuellement :</span>
+                            <span class="fw-bold">{{ charge.reste_a_payer }} FCFA</span>
+                        </div>
+                        {% else %}
+                      
+                        <div class="d-flex justify-content-between text-muted small">
+                            <span>Ancien montant versé :</span>
+                            <span class="fw-bold">{{ form.instance.montant_verse }} FCFA</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        
+                        {% if form.errors %}
+                        <div class="alert alert-danger rounded-4">
+                            {{ form.non_field_errors }}
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    <strong>{{ field.label }} :</strong> {{ field.errors|striptags }}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark">Montant versé (FCFA)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 rounded-start-3"><i class="fas fa-money-bill-wave"></i></span>
+                                <input type="number" name="montant_verse" 
+                                       value="{{ form.montant_verse.value|default_if_none:'' }}" 
+                                       class="form-control border-start-0 rounded-end-3" 
+                                       step="0.01" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark">Mode de paiement</label>
+                            {{ form.mode_paiement }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark">Notes / Référence</label>
+                            {{ form.notes }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark">Preuve de paiement (Image)</label>
+                            {% if form.instance.recu_image %}
+                                <div class="mb-2">
+                                    <small class="text-muted">Preuve actuelle :</small><br>
+                                    <img src="{{ form.instance.recu_image.url }}" class="img-thumbnail" style="max-height: 100px;">
+                                </div>
+                            {% endif %}
+                            {{ form.recu_image }}
+                        </div>
+
+                        <div class="d-grid gap-2 pt-3">
+                            <button type="submit" class="btn {% if edit_mode %}btn-warning{% else %}btn-success{% endif %} btn-lg rounded-pill shadow">
+                                <i class="fas fa-check-circle me-2"></i>
+                                {% if edit_mode %}Mettre à jour le paiement{% else %}Valider le paiement{% endif %}
+                            </button>
+                            <a href="{% url 'inventaire:liste_charges' %}" class="btn btn-light rounded-pill border">
+                                <i class="fas fa-times me-2"></i>Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Style pour harmoniser les champs Django avec Bootstrap */
+    .form-control, .form-select {
+        border-radius: 10px;
+        padding: 10px 15px;
+    }
+    .input-group-text {
+        border-radius: 10px;
+    }
+</style>
+-->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-lg rounded-4">
+                <!-- Titre dynamique selon le mode : bleu pour création, orange pour modification -->
+                <div class="card-header {% if modification %}bg-warning text-dark{% else %}bg-primary text-white{% endif %} py-3 rounded-top-4">
+                    <h4 class="mb-0">
+                        <i class="fas {% if modification %}fa-edit{% else %}fa-wallet{% endif %} me-2"></i>
+                        {% if modification %}
+                            Modifier le paiement : {{ charge.libelle }}
+                        {% else %}
+                            Régler : {{ charge.libelle }}
+                        {% endif %}
+                    </h4>
+                </div>
+
+                <div class="card-body p-4">
+                    <!-- Résumé financier -->
+                    <div class="alert alert-info border-0 rounded-4 shadow-sm mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Montant total de la charge :</span>
+                            <span class="fw-bold">{{ charge.montant_total }} FCFA</span>
+                        </div>
+                        
+                        {% if not modification %}
+                            <!-- Mode Création : on montre ce qu'il reste à payer -->
+                            <div class="d-flex justify-content-between text-danger">
+                                <span>Reste à payer actuellement :</span>
+                                <span class="fw-bold">{{ charge.reste_a_payer }} FCFA</span>
+                            </div>
+                        {% else %}
+                            <!-- Mode Modification : on rappelle le montant qui avait été saisi -->
+                            <div class="d-flex justify-content-between text-muted small">
+                                <span>Montant actuellement enregistré :</span>
+                                <span class="fw-bold">{{ form.instance.montant_verse }} FCFA</span>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Gestion des erreurs -->
+                        {% if form.errors %}
+                        <div class="alert alert-danger rounded-4">
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <strong>{{ field.label }} :</strong> {{ error }}<br>
+                                {% endfor %}
+                            {% endfor %}
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+                        <!-- Montant versé -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark">Montant versé (FCFA)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 rounded-start-3">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </span>
+                                <input type="number" name="montant_verse" 
+                                       value="{{ form.montant_verse.value|default:'' }}" 
+                                       class="form-control border-start-0 rounded-end-3" 
+                                       step="0.01" required>
+                            </div>
+                        </div>
+
+                        <!-- Mode de paiement -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark">Mode de paiement</label>
+                            {{ form.mode_paiement }}
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark">Notes / Référence</label>
+                            {{ form.notes }}
+                        </div>
+
+                        <!-- Preuve de paiement -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark">Preuve de paiement (Image)</label>
+                            {% if form.instance.recu_image %}
+                                <div class="mb-2">
+                                    <small class="text-muted d-block mb-1">Preuve actuelle :</small>
+                                    <img src="{{ form.instance.recu_image.url }}" class="img-thumbnail" style="max-height: 120px; border-radius: 10px;">
+                                </div>
+                            {% endif %}
+                            <div class="mt-1">
+                                {{ form.recu_image }}
+                            </div>
+                        </div>
+
+                        <!-- Boutons d'action -->
+                        <div class="d-grid gap-2 pt-3">
+                            <button type="submit" class="btn {% if modification %}btn-warning{% else %}btn-success{% endif %} btn-lg rounded-pill shadow">
+                                <i class="fas fa-check-circle me-2"></i>
+                                {% if modification %}Mettre à jour{% else %}Valider le paiement{% endif %}
+                            </button>
+                            <a href="{% url 'inventaire:liste_charges' %}" class="btn btn-light rounded-pill border">
+                                <i class="fas fa-times me-2"></i>Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Intégration fluide des widgets Django avec Bootstrap */
+    .form-control, .form-select, .input-group-text {
+        border-radius: 10px;
+    }
+    textarea.form-control {
+        min-height: 80px;
+    }
+    /* Style spécifique pour le champ fichier si nécessaire */
+    input[type="file"] {
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}

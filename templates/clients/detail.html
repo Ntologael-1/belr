@@ -1,0 +1,584 @@
+{% extends 'base.html' %}
+{% load humanize %}  
+
+
+{% block title %}
+    {{ object.nom }} - Analyse Premium
+{% endblock %}
+
+
+
+{% block page_title %}
+<i class="fas fa-user me-2"></i>Fiche Client
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+<li class="breadcrumb-item"><a href="{% url 'clients_list' %}">Clients</a></li>
+<li class="breadcrumb-item active">{{ client.nom_complet }}</li>
+{% endblock %}
+
+
+
+
+{% block content %}
+<style>
+    /* ==========================================
+       DESIGN SYSTEM & COMPOSANTS PREMIUM BEL'R
+       ========================================== */
+    .belr-bi-page {
+        background:
+            radial-gradient(circle at top right, rgba(78, 115, 223, 0.06), transparent 22%),
+            radial-gradient(circle at bottom left, rgba(28, 200, 138, 0.05), transparent 24%),
+            #f7f9fc;
+        min-height: 100vh;
+        opacity: 0;
+    }
+
+    .fade-in-up-page {
+        animation: fadeInUpPage 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fadeInUpPage {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .bi-header-card,
+    .bi-card,
+    .bi-kpi-card {
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        border-radius: 22px;
+        box-shadow: 0 10px 30px rgba(31, 41, 55, 0.06);
+    }
+
+    .bi-header-card { padding: 1.5rem 1.5rem; }
+    .bi-title { font-size: 1.6rem; font-weight: 800; color: #111827; letter-spacing: -0.02em; }
+    .bi-title span { color: #4e73df; }
+    .bi-subtitle { color: #6b7280; font-size: 0.95rem; }
+
+    .bi-chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0.45rem 0.85rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+
+    .bi-chip-primary { background: rgba(78, 115, 223, 0.12); color: #4e73df; }
+    .bi-chip-success { background: rgba(28, 200, 138, 0.12); color: #1cc88a; }
+    .bi-chip-light { background: #eef2ff; color: #4b5563; }
+    .bi-chip-dark { background: #111827; color: #fff; }
+
+    .btn-bi {
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        color: #4b5563;
+        font-weight: 600;
+        border-radius: 12px;
+        padding: 0.55rem 0.9rem;
+        transition: all 0.25s ease;
+    }
+
+    .btn-bi:hover {
+        background: #f3f6ff;
+        color: #4e73df;
+        border-color: rgba(78, 115, 223, 0.25);
+        transform: translateY(-1px);
+    }
+
+    .btn-bi.active {
+        background: linear-gradient(135deg, #4e73df, #6d8bff);
+        color: #fff;
+        border-color: transparent;
+        box-shadow: 0 8px 18px rgba(78, 115, 223, 0.18);
+    }
+
+    .bi-kpi-card { padding: 1.25rem; height: 100%; }
+    .bi-kpi-top { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; }
+    
+    .bi-kpi-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+
+    .bg-primary-soft { background: rgba(78, 115, 223, 0.12); }
+    .bg-success-soft { background: rgba(28, 200, 138, 0.12); }
+    .bg-info-soft { background: rgba(54, 185, 204, 0.12); }
+    .bg-warning-soft { background: rgba(246, 194, 62, 0.14); }
+
+    .bi-kpi-label { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #6b7280; letter-spacing: 0.04em; }
+    .bi-kpi-value { font-size: 2rem; font-weight: 800; color: #111827; line-height: 1.1; letter-spacing: -0.02em; }
+    .bi-kpi-meta { margin-top: 0.4rem; font-size: 0.85rem; color: #6b7280; }
+    .bi-progress { height: 8px; border-radius: 999px; background: #edf2f7; overflow: hidden; }
+    .bi-progress-lg { height: 10px; border-radius: 999px; background: #edf2f7; overflow: hidden; }
+
+    .bi-card-header { padding: 1.2rem 1.4rem; border-bottom: 1px solid rgba(226, 232, 240, 0.8); }
+    .bi-card-header h5 { font-weight: 800; color: #111827; margin: 0; }
+    .bi-card-header p { color: #6b7280; font-size: 0.88rem; }
+    .bi-card-body { padding: 1.4rem; }
+
+    .mini-stat {
+        background: linear-gradient(180deg, #ffffff, #f9fbff);
+        border: 1px solid #eef2f7;
+        border-radius: 18px;
+        padding: 1rem;
+        height: 100%;
+    }
+
+    .mini-label { display: block; font-size: 0.75rem; text-transform: uppercase; font-weight: 800; letter-spacing: 0.04em; color: #6b7280; margin-bottom: 0.35rem; }
+    .mini-value { font-size: 1.1rem; font-weight: 800; color: #111827; }
+
+    .insight-box {
+        background: linear-gradient(135deg, rgba(78, 115, 223, 0.04), rgba(28, 200, 138, 0.04));
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        border-radius: 18px;
+        padding: 1rem 1.1rem;
+        height: 100%;
+    }
+
+    .insight-title { font-size: 0.8rem; text-transform: uppercase; font-weight: 800; color: #6b7280; margin-bottom: 0.4rem; }
+    .insight-value { font-size: 1.35rem; font-weight: 800; color: #111827; }
+    .insight-sub { font-size: 0.85rem; color: #6b7280; margin-top: 0.35rem; }
+
+    .fidel-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem; }
+    .fidel-box { border: 1px solid #eef2f7; border-radius: 18px; padding: 1rem; background: #fafcff; }
+    .fidel-box span { display: block; color: #6b7280; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.35rem; }
+    .fidel-box strong { font-size: 1.25rem; font-weight: 800; color: #111827; }
+
+    /* Style Premium pour le tableau analytique */
+    .table-belr { margin-bottom: 0; }
+    .table-belr th { background: #f8fafc; text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.05em; color: #4b5563; padding: 1rem 1.2rem; border-bottom: 2px solid #edf2f7; }
+    .table-belr td { padding: 1rem 1.2rem; vertical-align: middle; color: #1f2937; font-size: 0.9rem; border-bottom: 1px solid #edf2f7; }
+    .table-belr tr:last-child td { border-bottom: none; }
+
+    /* ==========================================
+       OPTIMISATION DES TRANSITIONS & SHIMMER UX
+       ========================================== */
+    .bi-chart-loading {
+        position: relative;
+        overflow: hidden;
+        background: #f8fafc !important;
+        border-radius: 14px;
+    }
+
+    .bi-chart-loading::after {
+        position: absolute;
+        top: 0; right: 0; bottom: 0; left: 0;
+        transform: translateX(-100%);
+        background-image: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.5) 20%,
+            rgba(255, 255, 255, 0.7) 60%,
+            rgba(255, 255, 255, 0) 100%
+        );
+        animation: biShimmer 1.4s infinite ease-in-out;
+        content: '';
+    }
+
+    @keyframes biShimmer { 100% { transform: translateX(100%); } }
+
+    .bi-card-body canvas { opacity: 0; transition: opacity 0.3s ease-in-out; }
+    .bi-card-body.loaded canvas { opacity: 1; }
+
+    canvas { width: 100% !important; max-height: 320px; }
+
+    @media (max-width: 991.98px) {
+        .bi-title { font-size: 1.35rem; }
+        .bi-kpi-value { font-size: 1.6rem; }
+        .fidel-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="container-fluid py-4 px-3 px-lg-4 belr-bi-page fade-in-up-page">
+
+    <div class="bi-header-card mb-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+            <div>
+                <div class="d-flex align-items-center flex-wrap gap-2 mb-2">
+                    <span class="bi-chip bi-chip-primary">
+                        <i class="fas fa-brain me-1"></i> Intelligence BEL'R
+                    </span>
+                    <span class="bi-chip bi-chip-light">{{ label_periode }}</span>
+
+                    {% if is_pack %}
+                        <span class="bi-chip bi-chip-dark"><i class="fas fa-box-open me-1"></i> Pack</span>
+                    {% else %}
+                        <span class="bi-chip bi-chip-success"><i class="fas fa-scissors me-1"></i> Service</span>
+                    {% endif %}
+                </div>
+
+                <h2 class="bi-title mb-1">Analyse stratégique : <span>{{ object.nom }}</span></h2>
+                <p class="bi-subtitle mb-0">Performance commerciale, fidélisation, cross-sell et saisonnalité.</p>
+            </div>
+
+            <div class="period-filter d-flex flex-wrap gap-2">
+                <a href="?period=today" class="btn btn-bi {% if period == 'today' %}active{% endif %}">Aujourd'hui</a>
+                <a href="?period=week" class="btn btn-bi {% if period == 'week' %}active{% endif %}">Semaine</a>
+                <a href="?period=month" class="btn btn-bi {% if period == 'month' %}active{% endif %}">Mois</a>
+                <a href="?period=year" class="btn btn-bi {% if period == 'year' %}active{% endif %}">Année</a>
+                <a href="?period=all" class="btn btn-bi {% if period == 'all' %}active{% endif %}">Tout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="bi-kpi-card">
+                <div class="bi-kpi-top">
+                    <div class="bi-kpi-icon bg-primary-soft text-primary"><i class="fas fa-bullseye"></i></div>
+                    <span class="bi-kpi-label">{% if is_pack %}Cohérence Pack{% else %}Score Stratégique{% endif %}</span>
+                </div>
+                {% if is_pack %}
+                    <div class="bi-kpi-value">{{ score_coherence_pack|default:"0" }}%</div>
+                    <div class="progress bi-progress mt-2"><div class="progress-bar bg-primary" style="width: {{ score_coherence_pack|default:'0' }}%"></div></div>
+                {% else %}
+                    <div class="bi-kpi-value">{{ score_strategique|default:"0" }}%</div>
+                    <div class="progress bi-progress mt-2"><div class="progress-bar bg-success" style="width: {{ score_strategique|default:'0' }}%"></div></div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="bi-kpi-card">
+                <div class="bi-kpi-top">
+                    <div class="bi-kpi-icon bg-info-soft text-info"><i class="fas fa-hand-holding-usd"></i></div>
+                    <span class="bi-kpi-label">Prorata Produits (Coût)</span>
+                </div>
+                <div class="bi-kpi-value {% if prorata_theorique > 25 %}text-danger{% elif prorata_theorique > 15 %}text-warning{% else %}text-success{% endif %}">
+                    {{ prorata_theorique|floatformat:1 }}%
+                </div>
+                <div class="bi-kpi-meta"><span class="fw-bold">Marge : {{ marge_unitaire_theorique|floatformat:0 }} F</span> · Coût stock : {{ cout_total_produits|floatformat:0 }} F</div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="bi-kpi-card">
+                <div class="bi-kpi-top">
+                    <div class="bi-kpi-icon bg-info-soft text-info"><i class="fas fa-receipt"></i></div>
+                    <span class="bi-kpi-label">Tickets Uniques</span>
+                </div>
+                <div class="bi-kpi-value">{{ tickets_uniques|default:"0" }}</div>
+                <div class="bi-kpi-meta">Pénétration : {{ penetration_service|default:"0" }}%</div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="bi-kpi-card">
+                <div class="bi-kpi-top">
+                    <div class="bi-kpi-icon bg-warning-soft text-warning"><i class="fas fa-clock"></i></div>
+                    <span class="bi-kpi-label">Pic d'activité</span>
+                </div>
+                <div class="bi-kpi-value fs-3" style="font-weight:800;">{{ meilleur_jour|default:"--" }}</div>
+                <div class="bi-kpi-meta">Heure forte : <span class="fw-bold text-dark">{{ meilleure_heure|default:"--" }}</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-xl-8">
+            <div class="bi-card h-100">
+                <div class="bi-card-header">
+                    <div>
+                        <h5 class="mb-1">Vue Business Intelligence</h5>
+                        <p class="mb-0">Lecture analytique des performances et opportunités.</p>
+                    </div>
+                </div>
+                <div class="bi-card-body">
+                    {% if is_pack %}
+                        <div class="row g-3">
+                            <div class="col-md-6 col-lg-3"><div class="mini-stat"><span class="mini-label">Prix Pack</span><div class="mini-value">{{ prix_pack|default:"0" }} F</div></div></div>
+                            <div class="col-md-6 col-lg-3"><div class="mini-stat"><span class="mini-label">Prix Théorique</span><div class="mini-value">{{ prix_theorique|default:"0" }} F</div></div></div>
+                            <div class="col-md-6 col-lg-3"><div class="mini-stat"><span class="mini-label">Remise Faciale</span><div class="mini-value">{{ remise_faciale|default:"0" }}%</div></div></div>
+                            <div class="col-md-6 col-lg-3"><div class="mini-stat"><span class="mini-label">Utilisations</span><div class="mini-value">{{ total_utilisations|default:"0" }}</div></div></div>
+                        </div>
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6">
+                                <div class="insight-box">
+                                    <div class="insight-title">CA Ventilé</div>
+                                    <div class="insight-value">{{ ca_ventile|default:"0" }} FCFA</div>
+                                    <div class="insight-sub">Valeur générée par les lignes du pack</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="insight-box">
+                                    <div class="insight-title">Structure du Pack</div>
+                                    <div class="insight-value">{{ nb_locomotives|default:"0" }} locomotive(s)</div>
+                                    <div class="insight-sub">
+                                        {% if conflit_marge %}
+                                            <span class="text-danger fw-semibold"><i class="fas fa-exclamation-triangle me-1"></i>Risque de cannibalisation</span>
+                                        {% else %}
+                                            <span class="text-success fw-semibold"><i class="fas fa-check-circle me-1"></i>Structure saine du pack</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="row g-3">
+                            <div class="col-md-6 col-lg-3"><div class="mini-stat"><span class="mini-label">Total Ventes</span><div class="mini-value">{{ total_ventes|default:"0" }}</div></div></div>
+                            <div class="col-md-6 col-lg-3"><div class="mini-stat"><span class="mini-label">CA Service</span><div class="mini-value">{{ ca_service|default:"0" }} F</div></div></div>
+                            <div class="col-md-6 col-lg-3"><div class="mini-stat"><span class="mini-label">Via Pack</span><div class="mini-value">{{ ventes_via_pack|default:"0" }}</div></div></div>
+                            <div class="col-md-6 col-lg-3"><div class="mini-stat"><span class="mini-label">Conversion Pack</span><div class="mini-value">{{ taux_conversion_pack|default:"0" }}%</div></div></div>
+                        </div>
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6">
+                                <div class="insight-box">
+                                    <div class="insight-title">Part dans les tickets</div>
+                                    <div class="insight-value">{{ part_ticket|default:"0" }}%</div>
+                                    <div class="insight-sub">Poids économique dans les reçus concernés</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="insight-box">
+                                    <div class="insight-title">Classe stratégique</div>
+                                    <div class="insight-value text-{{ badge_strategique|default:'secondary' }}">{{ classe_strategique|default:"Non classé" }}</div>
+                                    <div class="insight-sub">Rôle commercial configuré dans BEL'R</div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="bi-card h-100">
+                <div class="bi-card-header">
+                    <div>
+                        <h5 class="mb-1">Fidélisation Client</h5>
+                        <p class="mb-0">Répartition des comportements d'achat.</p>
+                    </div>
+                </div>
+                <div class="bi-card-body">
+                    <div class="fidel-grid">
+                        <div class="fidel-box"><span>1 achat</span><strong>{{ fidelisation.clients_1_achat|default:"0" }}</strong></div>
+                        <div class="fidel-box"><span>2 à 3 achats</span><strong>{{ fidelisation.clients_2_3_achats|default:"0" }}</strong></div>
+                        <div class="fidel-box"><span>4+ achats</span><strong>{{ fidelisation.clients_4_plus_achats|default:"0" }}</strong></div>
+                        <div class="fidel-box"><span>Moyenne / client</span><strong>{{ fidelisation.moyenne_achats_par_client|default:"0" }}</strong></div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="small text-muted fw-semibold mb-2">Taux de récurrence</div>
+                        <div class="progress bi-progress-lg">
+                            <div class="progress-bar bg-{{ fidelisation.badge_fidelisation|default:'primary' }}" style="width: {{ fidelisation.taux_repeat_clients|default:'0' }}%"></div>
+                        </div>
+                        <div class="small text-muted mt-2">
+                            Niveau : <span class="fw-semibold text-{{ fidelisation.badge_fidelisation|default:'primary' }}">{{ fidelisation.niveau_fidelite|default:"Faible" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if is_pack %}
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="bi-card">
+                <div class="bi-card-header">
+                    <div>
+                        <h5 class="mb-1">Constitution Analytique du Pack</h5>
+                        <p class="mb-0">Diagnostic de rentabilité et poids stratégique des lignes de services imbriquées.</p>
+                    </div>
+                </div>
+                <div class="bi-card-body p-0 overflow-hidden" style="border-radius: 0 0 22px 22px;">
+                    <div class="table-responsive">
+                        <table class="table table-belr align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Service Inclus</th>
+                                    <th>Prix Théorique</th>
+                                    <th>Rôle dans le Pack</th>
+                                    <th>Analyse de la Marge</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ligne in lignes_pack %}
+                                <tr>
+                                    <td class="fw-bold">{{ ligne.service.nom }}</td>
+                                    <td>{{ ligne.prix_theorique|default:"0" }} F</td>
+                                    <td>
+                                        {% if ligne.is_locomotive %}
+                                            <span class="badge bg-primary-soft text-primary rounded-pill px-2.5 py-1.5 fw-bold" style="font-size:0.75rem;">Locomotive</span>
+                                        {% else %}
+                                            <span class="badge bg-light text-secondary rounded-pill px-2.5 py-1.5 fw-bold" style="font-size:0.75rem;">Complémentaire</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if ligne.conflit_marge_ligne %}
+                                            <span class="text-danger fw-semibold"><i class="fas fa-arrow-down me-1"></i> Marge critique</span>
+                                        {% else %}
+                                            <span class="text-success fw-semibold"><i class="fas fa-check me-1"></i> Marge préservée</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">Aucune ligne de service trouvée pour ce pack.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="bi-card h-100">
+                <div class="bi-card-header">
+                    <div>
+                        <h5 class="mb-1">Affluence Hebdomadaire / Journalière</h5>
+                        <p class="mb-0">Répartition des ventes selon l'activité de la période sélectionnée.</p>
+                    </div>
+                </div>
+                <div id="bodyChartJours" class="bi-card-body bi-chart-loading">
+                    <canvas id="chartJours" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="bi-card h-100">
+                <div class="bi-card-header">
+                    <div>
+                        <h5 class="mb-1">Évolution Mensuelle du Chiffre d'Affaires</h5>
+                        <p class="mb-0">Suivi des tendances macro-économiques et de la croissance sur l'année.</p>
+                    </div>
+                </div>
+                <div id="bodyChartEvolution" class="bi-card-body bi-chart-loading">
+                    <canvas id="chartEvolution" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        
+        // --- 1. GRAPHIQUE BARRES (JOURS) ---
+        const ctxJours = document.getElementById('chartJours');
+        if (ctxJours) {
+            new Chart(ctxJours, {
+                type: 'bar',
+                data: {
+                    labels: {{ jours_labels|default:"[]"|safe }},
+                    datasets: [{
+                        data: {{ jours_data|default:"[]"|safe }},
+                        backgroundColor: 'rgba(78, 115, 223, 0.85)',
+                        borderRadius: 10,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 300,
+                        onComplete: function() {
+                            const container = document.getElementById('bodyChartJours');
+                            if (container) {
+                                container.classList.remove('bi-chart-loading');
+                                container.classList.add('loaded');
+                            }
+                        }
+                    },
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#6b7280', font: { weight: '600' } } },
+                        y: { beginAtZero: true, ticks: { precision: 0, color: '#6b7280' }, grid: { color: 'rgba(0,0,0,0.04)' } }
+                    }
+                }
+            });
+        }
+
+        // --- 2. GRAPHIQUE LINÉAIRE (ÉVOLUTION DE L'ANNÉE) ---
+        const ctxEvolution = document.getElementById('chartEvolution');
+        if (ctxEvolution) {
+            new Chart(ctxEvolution, {
+                type: 'line',
+                data: {
+                    labels: {{ evolution_labels|default:"[]"|safe }},
+                    datasets: [{
+                        label: 'Chiffre d\'Affaires',
+                        data: {{ evolution_data|default:"[]"|safe }},
+                        borderColor: '#4e73df',
+                        backgroundColor: 'rgba(78, 115, 223, 0.06)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#4e73df',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: '#4e73df',
+                        pointHoverBorderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 400,
+                        onComplete: function() {
+                            const container = document.getElementById('bodyChartEvolution');
+                            if (container) {
+                                container.classList.remove('bi-chart-loading');
+                                container.classList.add('loaded');
+                            }
+                        }
+                    },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#111827',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            padding: 10,
+                            borderRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y.toLocaleString() + ' FCFA';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            grid: { display: false },
+                            ticks: { color: '#6b7280', font: { weight: '600' } }
+                        },
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { 
+                                color: '#6b7280',
+                                callback: function(value) { return value.toLocaleString() + ' F'; }
+                            }, 
+                            grid: { color: 'rgba(0,0,0,0.04)' } 
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

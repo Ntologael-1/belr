@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+<div class="container-fluid py-4">
+    
+    <div class="mb-4">
+        <a href="{{ request.META.HTTP_REFERER|default:'#' }}" class="text-muted text-decoration-none d-inline-flex align-items-center gap-2 mb-2 hover-dark" style="font-size: 0.82rem; transition: color 0.2s;">
+            <i class="fas fa-arrow-left" style="font-size: 0.75rem;"></i>
+            <span>Retour à la page précédente</span>
+        </a>
+        
+        <div class="d-flex justify-content-between align-items-center mt-1">
+            <div>
+                <h1 class="h4 fw-bold text-dark mb-1">Historique des Saisies Manuelles</h1>
+                <p class="text-muted mb-0" style="font-size: 0.85rem;">Traçabilité exclusive des fiches d'achats et des restes physiques d'inventaires.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+        <div class="card-body p-3">
+           <form method="GET" action="" class="row g-2 align-items-center">
+                
+                <div class="col-12 col-md-4">
+                    <div class="input-group input-group-merge">
+                        <span class="input-group-text bg-light border-end-0 text-muted" style="font-size: 0.9rem;">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" name="q" value="{{ q }}" class="form-control bg-light border-start-0" placeholder="Rechercher un produit..." style="font-size: 0.88rem;">
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-2">
+                    <select name="type_mouvement" class="form-select bg-light border-0" style="font-size: 0.88rem;">
+                        <option value="" {% if not type_actuel %}selected{% endif %}>Tous les types</option>
+                        <option value="ENTREE" {% if type_actuel == "ENTREE" %}selected{% endif %}>Entrées / Achats</option>
+                        <option value="SORTIE" {% if type_actuel == "SORTIE" %}selected{% endif %}>Restes (Inventaires)</option>
+                    </select>
+                </div>
+
+                <div class="col-3 col-md-2">
+                    <select name="mois" class="form-select bg-light border-0" style="font-size: 0.88rem;">
+                        <option value="">Tous les mois</option>
+                        {% for m_val, m_nom in mois_liste %}
+                            <option value="{{ m_val }}" {% if mois_actuel == m_val %}selected{% endif %}>
+                                {{ m_nom }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-3 col-md-2">
+                    <select name="annee" class="form-select bg-light border-0" style="font-size: 0.88rem;">
+                        <option value="">Toutes les années</option>
+                        {% for a in annees_liste %}
+                            <option value="{{ a }}" {% if annee_actuelle == a %}selected{% endif %}>
+                                {{ a }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-dark w-100 fw-semibold" style="font-size: 0.85rem; border-radius: 6px;">
+                        Filtrer
+                    </button>
+                    <a href="{% url 'inventaire:historique_mouvements_global' %}" class="btn btn-light text-muted border-0 d-flex align-items-center justify-content-center px-3" title="Réinitialiser au mois actuel">
+                        <i class="fas fa-sync-alt"></i>
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+
+    {% if has_results %}
+        <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+            <div class="table-responsive">
+                <table class="table align-middle table-hover mb-0" style="font-size: 0.85rem;">
+                    <thead class="table-light text-uppercase text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                        <tr>
+                            <th class="ps-4">Date / Heure</th>
+                            <th>Produit</th>
+                            <th>Nature</th>
+                            <th class="text-center">Quantité Saisie / Restante</th>
+                            <th class="text-end">Valeur d'Achat</th>
+                            <th>Opérateur</th>
+                            <th class="pe-4 text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                        {% for mv in mouvements %}
+                        <tr>
+                            <td class="ps-4 text-muted" style="font-size: 0.82rem;">
+                                {{ mv.date_mouvement|date:"d/m/Y" }} 
+                                <small class="d-block text-black-50" style="font-size: 0.72rem;">{{ mv.date_mouvement|date:"H:i" }}</small>
+                            </td>
+
+                            <td>
+                                <div class="fw-bold text-dark" style="font-size: 0.88rem;">{{ mv.produit.nom }}</div>
+                                <span class="text-muted font-monospace" style="font-size: 0.72rem;">{{ mv.produit.code|default:"--" }}</span>
+                            </td>
+
+                            <td>
+                                <span class="badge px-2 py-1 {{ mv.badge_style }}" style="font-size: 0.72rem; border-radius: 4px; font-weight: 600;">
+                                    {{ mv.type_label }}
+                                </span>
+                            </td>
+
+                            <td class="text-center fw-semibold" style="font-size: 0.88rem;">
+                                {% if mv.type_mouvement == 'ENTREE' %}
+                                    <span class="text-success">+{{ mv.quantite_a_afficher|floatformat:1 }}</span>
+                                {% else %}
+                                    <span class="text-primary">{{ mv.quantite_a_afficher|floatformat:1 }}</span> 
+                                    <small class="text-muted d-block" style="font-size: 0.68rem; font-weight: normal;">(Reste en rayon)</small>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-end font-monospace fw-bold text-dark">
+                                {% if mv.type_mouvement == 'ENTREE' %}
+                                    <span>{{ mv.prix_total_achat|floatformat:0 }}</span> <small style="font-size: 0.65rem;">FCFA</small>
+                                    <div class="text-muted font-normal d-block mt-0.5" style="font-size: 0.68rem; font-weight: normal;">
+                                        PU: {{ mv.prix_achat_unitaire|default:mv.produit.prix_achat_moyen|floatformat:0 }} FCFA
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted" style="font-weight: normal; font-size: 0.8rem;">--</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-muted">
+                                {{ mv.created_by.username|default:"Manager" }}
+                            </td>
+
+                            <td class="pe-4 text-end">
+                                <a href="{% url 'inventaire:modifier_mouvement' mv.pk %}" class="btn btn-sm btn-light border-0 px-2 text-dark">
+                                    <i class="fas fa-pen-to-square" style="font-size: 0.78rem;"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="fas fa-box-open d-block mb-2 text-black-50" style="font-size: 1.8rem;"></i>
+                                Aucune action manuelle trouvée pour cette sélection.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+            <div>
+                <span class="text-muted">Page {{ mouvements.number }} sur {{ mouvements.paginator.num_pages }}</span>
+            </div>
+            <div class="pagination-buttons">
+                {% if mouvements.has_previous %}
+                    <a href="?page={{ mouvements.previous_page_number }}&q={{ q }}&type_mouvement={{ type_actuel }}&mois={{ mois_actuel }}&annee={{ annee_actuelle }}" class="btn btn-sm btn-secondary" style="padding: 5px 10px; margin-right: 5px; text-decoration: none; background: #6c757d; color: white; border-radius: 4px;">Précédent</a>
+                {% endif %}
+
+                {% if mouvements.has_next %}
+                    <a href="?page={{ mouvements.next_page_number }}&q={{ q }}&type_mouvement={{ type_actuel }}&mois={{ mois_actuel }}&annee={{ annee_actuelle }}" class="btn btn-sm btn-primary" style="padding: 5px 10px; text-decoration: none; background: #8A2BE2; color: white; border-radius: 4px;">Suivant</a>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state" style="text-align: center; padding: 40px; background: #f8f9fa; border: 1px dashed #dee2e6; border-radius: 4px; margin-top: 20px;">
+            <p style="margin: 0; color: #6c757d; font-size: 16px; mb-2;">
+                <i class="fa-solid fa-boxes-stacked me-2"></i>Aucun mouvement de stock trouvé pour cette période.
+            </p>
+            {% if q or type_actuel %}
+                <a href="{% url 'historique_mouvements_global' %}" class="btn btn-sm btn-link text-primary p-0">Effacer les filtres</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .bg-light-success { background-color: #e8f5e9; color: #2e7d32 !important; }
+    .bg-light-warning { background-color: #fff3e0; color: #ef6c00 !important; }
+    .bg-light-info { background-color: #e3f2fd; color: #1565c0 !important; }
+    .table-hover tbody tr:hover { background-color: #fdfdfd; }
+    .hover-dark:hover { color: #212529 !important; }
+</style>
+{% endblock %}

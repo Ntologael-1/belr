@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+        <div class="col-md-6 col-lg-5 text-center">
+            
+            <div class="card border-0 shadow-lg rounded-3 p-4 p-sm-5 bg-white">
+                <div class="mb-4 text-danger">
+                    <i class="fas fa-link-slash fa-4x mb-3"></i>
+                    <h4 class="fw-bold text-dark">Lien expiré ou invalide</h4>
+                </div>
+                
+                <p class="text-muted small mb-4">
+                    Ce lien d'activation a expiré pour des raisons de sécurité ou a déjà été utilisé pour configurer ce compte employé.
+                </p>
+
+                <div class="alert alert-light border small text-start mb-4">
+                    <i class="fas fa-info-circle text-primary me-2"></i> 
+                    <strong>Que faire ?</strong> Demandez au gérant de votre salon de vous générer un nouveau lien d'accès sécurisé depuis l'interface <strong>BEL'R</strong>.
+                </div>
+
+                <div class="d-grid">
+                    <a href="{% url 'login' %}" class="btn btn-outline-primary fw-bold py-2">
+                        <i class="fas fa-sign-in-alt me-2"></i> Aller à la page de connexion
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center align-items-center" style="min-height: 75vh;">
+        <div class="col-md-6 col-lg-5">
+            
+            <!-- Logo ou En-tête de l'application -->
+            <div class="text-center mb-4">
+                <h2 class="fw-bold text-primary mb-1">🎉 Bienvenue chez BEL'R</h2>
+                <p class="text-muted small">Finalisez la configuration de votre compte employé</p>
+            </div>
+
+            <!-- Carte du formulaire -->
+            <div class="card border-0 shadow-lg rounded-3">
+                <div class="card-body p-4 p-sm-5">
+                    
+                    <div class="mb-4">
+                        <h5 class="fw-bold text-dark mb-1">Créer votre mot de passe</h5>
+                        <p class="text-muted small mb-0">Bonjour <strong>{{ user.username }}</strong>, choisissez un mot de passe sécurisé pour accéder à votre espace.</p>
+                    </div>
+
+                    <!-- Affichage des messages d'erreur système (ex: mots de passe non identiques) -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} border-0 small shadow-sm mb-4 py-2" role="alert">
+                                <i class="fas fa-exclamation-circle me-2"></i> {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" id="passwordForm" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Champ Mot de passe 1 -->
+                        <div class="mb-3 position-relative">
+                            <label for="password" class="form-label small fw-bold text-muted">Nouveau mot de passe</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-lock"></i></span>
+                                <input type="password" name="password" id="password" class="form-control border-start-0 bg-light" placeholder="••••••••" required minlength="6">
+                                <button class="btn btn-light border text-muted toggle-password" type="button" data-target="password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="form-text small text-muted mt-1" id="passwordRules">
+                                Minimum 6 caractères.
+                            </div>
+                        </div>
+
+                        <!-- Champ Validation Mot de passe -->
+                        <div class="mb-4">
+                            <label for="confirm_password" class="form-label small fw-bold text-muted">Confirmer le mot de passe</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-check-double"></i></span>
+                                <input type="password" name="confirm_password" id="confirm_password" class="form-control border-start-0 bg-light" placeholder="••••••••" required>
+                                <button class="btn btn-light border text-muted toggle-password" type="button" data-target="confirm_password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="invalid-feedback id="matchError" style="display: none;">
+                                <i class="fas fa-times-circle me-1"></i> Les mots de passe ne correspondent pas.
+                            </div>
+                        </div>
+
+                        <!-- Bouton de soumission -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary py-2.5 fw-bold shadow-sm rounded-3" id="submitBtn">
+                                <i class="fas fa-user-check me-2"></i> Activer mon compte
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
+            <!-- Footer discret -->
+            <div class="text-center mt-4">
+                <p class="small text-muted">&copy; 2026 BEL'R SaaS — Gestion de Salon de Coiffure.</p>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Focus stylisé style SaaS Premium */
+    .form-control:focus {
+        background-color: #fff !important;
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+    }
+    .input-group-text {
+        border-right: none;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Gestion de la visibilité du mot de passe (Afficher/Masquer)
+    const toggleButtons = document.querySelectorAll('.toggle-password');
+    toggleButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const icon = this.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+    });
+
+    // 2. Validation Javascript côté client avant soumission
+    const form = document.getElementById('passwordForm');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+    const matchError = document.getElementById('matchError');
+
+    form.addEventListener('submit', function(event) {
+        let valid = true;
+
+        if (password.value !== confirmPassword.value) {
+            confirmPassword.classList.add('is-invalid');
+            matchError.style.display = 'block';
+            valid = false;
+        } else {
+            confirmPassword.classList.remove('is-invalid');
+            matchError.style.display = 'none';
+        }
+
+        if (!form.checkValidity() || !valid) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        form.classList.add('was-validated');
+    }, false);
+});
+</script>
+{% endblock %}

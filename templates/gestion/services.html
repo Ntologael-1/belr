@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% load auth_extras %}
+
+{% block title %}Services - Catalogue{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-spa me-2"></i>Catalogue des Services
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+<li class="breadcrumb-item active">Services</li>
+{% endblock %}
+
+
+
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <div class="input-group shadow-sm rounded">
+            <span class="input-group-text bg-white border-end-0">
+                <i class="fas fa-search text-muted"></i>
+            </span>
+            <input type="text" class="form-control border-start-0 ps-0" id="searchServices" placeholder="Rechercher un service sur cette page...">
+        </div>
+    </div>
+    <div class="col-md-4 text-end mt-3 mt-md-0">
+        <a href="{% url 'service_create' %}" class="btn btn-saloon shadow-sm px-4">
+            <i class="fas fa-plus me-2"></i>Nouveau Service
+        </a>
+    </div>
+</div>
+
+<div class="category-tabs mb-4 pb-2 d-flex flex-wrap gap-2 border-bottom">
+    <a href="?categorie=tous" class="btn btn-sm rounded-pill px-3 shadow-sm {% if active_category == 'tous' %}btn-saloon{% else %}btn-light bg-white border{% endif %}">
+        Tous les services
+    </a>
+    
+    {% for cat in categories %}
+        <a href="?categorie={{ cat.id }}" class="btn btn-sm rounded-pill px-3 shadow-sm {% if active_category == cat.id|slugify %}btn-saloon{% else %}btn-light bg-white border{% endif %}">
+            <i class="fas fa-tag me-1" style="color: {% if active_category == cat.id|slugify %}#fff{% else %}{{ cat.couleur|default:'#4f46e5' }}{% endif %};"></i>
+            {{ cat.nom }}
+        </a>
+    {% endfor %}
+
+    <a href="?categorie=uncategorized" class="btn btn-sm rounded-pill px-3 shadow-sm {% if active_category == 'uncategorized' %}btn-secondary text-white{% else %}btn-light bg-white border{% endif %}">
+        Sans catégorie
+    </a>
+</div>
+
+{% if has_results %}
+<div class="row g-4 mb-4">
+    {% for service in services %}
+    <div class="col-xl-3 col-lg-4 col-md-6 service-item">
+        <div class="card h-100 service-card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="service-icon shadow-sm" style="background-color: {{ service.couleur }}15; color: {{ service.couleur }};">
+                        <i class="fas {% if service.est_un_pack %}fa-layer-group{% else %}fa-magic{% endif %}"></i>
+                    </div>
+                    <div>
+                        {% if active_category == 'tous' and service.categorie %}
+                            <span class="badge rounded-pill bg-light text-muted border me-1" style="font-size: 0.65rem;">{{ service.categorie.nom }}</span>
+                        {% endif %}
+                        <span class="badge {% if service.actif %}bg-soft-success text-success{% else %}bg-soft-secondary text-secondary{% endif %} border-0 px-2" style="font-size: 0.65rem;">
+                            {% if service.actif %}ACTIF{% else %}INACTIF{% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <h5 class="fw-bold text-dark mb-1">
+                    {{ service.nom }}
+                    {% if service.est_un_pack %}
+                        <i class="fas fa-boxes text-primary ms-1" style="font-size: 0.8rem;" title="Pack de services"></i>
+                    {% endif %}
+                </h5>
+                <p class="text-muted small mb-2">
+                    <i class="far fa-clock me-1"></i>{{ service.duree }} min
+                </p>
+                
+                <div style="min-height: 60px;">
+                    {% if service.est_un_pack %}
+                        <div class="d-flex flex-wrap gap-1 mt-2">
+                            {% for inclus in service.services_inclus.all %}
+                                <span class="badge border text-muted fw-normal bg-white" style="font-size: 0.65rem; border-color: {{ service.couleur }}40 !important;">
+                                    {{ inclus.nom }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted small mb-0 text-truncate-2">
+                            {{ service.description|default:"Aucune description." }}
+                        </p>
+                    {% endif %}
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-end mt-3">
+                    <div>
+                        <div class="small text-muted mb-0" style="font-size: 0.7rem;">Prix Prestation</div>
+                        <span class="h4 fw-bold mb-0" style="color: {{ service.couleur }};">{{ service.prix }} F</span>
+                    </div>
+                </div>
+            </div>
+            {% if request.user|is_manager_or_above %} 
+                <div class="card-footer bg-light bg-opacity-50 border-0 p-3">
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'service_detail' service.pk %}" class="btn btn-white border flex-grow-1 shadow-sm btn-sm text-indigo">
+                            <i class="fas fa-chart-line me-1"></i> Stats
+                        </a>
+                        <a href="{% url 'service_edit' service.pk %}" class="btn btn-white border shadow-sm btn-sm text-primary"><i class="fas fa-edit"></i></a>
+                        <a href="{% url 'service_delete' service.pk %}" class="btn btn-white border shadow-sm btn-sm text-danger"><i class="fas fa-trash"></i></a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="pagination-container d-flex justify-content-between align-items-center mt-4 p-3 bg-white border rounded shadow-sm">
+    <div>
+        <span class="text-muted small">
+            Services {{ services.start_index }} à {{ services.end_index }} sur {{ services.paginator.count }} 
+            (Page {{ services.number }} / {{ services.paginator.num_pages }})
+        </span>
+    </div>
+    <div class="pagination-buttons">
+        {% if services.has_previous %}
+            <a href="?page={{ services.previous_page_number }}&categorie={{ active_category }}" class="btn btn-sm btn-light border px-3">Précédent</a>
+        {% endif %}
+
+        {% if services.has_next %}
+            <a href="?page={{ services.next_page_number }}&categorie={{ active_category }}" class="btn btn-sm btn-primary px-3 text-white">Suivant</a>
+        {% endif %}
+    </div>
+</div>
+
+{% else %}
+<div class="empty-state text-center padding-40 bg-light border border-dashed rounded-4 p-5 mt-4">
+    <i class="fas fa-folder-open text-muted mb-3" style="font-size: 2.5rem; opacity: 0.5;"></i>
+    <p class="margin-0 text-muted fs-6 fw-medium">Aucun service disponible ou trouvé pour cette catégorie.</p>
+</div>
+{% endif %}
+
+<style>
+    :root { --primary-indigo: #4f46e5; --soft-indigo: #eef2ff; }
+    .bg-soft-indigo { background-color: var(--soft-indigo); }
+    .text-indigo { color: var(--primary-indigo); }
+    .btn-white { background: white; color: #475569; transition: all 0.2s; }
+    .btn-white:hover { background: #f8fafc; color: var(--primary-indigo); transform: translateY(-2px); }
+    .service-card { transition: all 0.3s cubic-bezier(.25,.8,.25,1); border: 1px solid rgba(0,0,0,0.05) !important; }
+    .service-card:hover { transform: translateY(-8px); box-shadow: 0 15px 35px rgba(79, 70, 229, 0.12) !important; }
+    .service-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+    .text-truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .btn-saloon { background: var(--primary-indigo) !important; color: white !important; border-radius: 10px; font-weight: 600; }
+    .btn-saloon:hover { background: #4338ca !important; color: white !important; transform: scale(1.02); }
+</style>
+
+<script>
+    // Filtre de recherche dynamique sur la page active
+    document.getElementById('searchServices').addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll('.service-item').forEach(item => {
+            const text = item.innerText.toLowerCase();
+            item.style.display = text.includes(term) ? 'block' : 'none';
+        });
+    });
+</script>
+{% endblock %}

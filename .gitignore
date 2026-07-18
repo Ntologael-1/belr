@@ -1,0 +1,28 @@
+.env
+
+# Fichiers de configuration sensibles (À ne JAMAIS commiter)
+.env
+
+# Base de données locale (SQLite)
+*.sqlite3
+
+# Environnement virtuel Python
+venv/
+env/
+my_django/
+
+# Fichiers temporaires et caches Python
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Fichiers statiques et médias générés localement
+/staticfiles/
+/media/
+
+# Fichiers système et IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

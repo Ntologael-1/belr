@@ -1,0 +1,643 @@
+{% extends 'base.html' %}
+
+{% block title %}Clients - Liste{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-users me-2"></i>Gestion des Clients
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+<li class="breadcrumb-item active">Clients</li>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% block content %}
+<div class="container-fluid py-4 rapport-page">
+
+    <div class="row align-items-center mb-5 g-3">
+        <div class="col-lg-6">
+            <h2 class="fw-bold mb-1 page-title">
+                Rapport d'Activité <span class="brand-text">BEL'R</span>
+            </h2>
+            <p class="text-muted mb-0 small"><i class="far fa-chart-bar me-1"></i> Analyse des performances et insights stratégiques</p>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="d-flex flex-wrap gap-2 justify-content-lg-end align-items-center">
+                <form method="GET" class="d-flex gap-2 filter-group p-2 bg-white rounded-4 shadow-sm border">
+                    <select name="month" class="form-select border-0 bg-light custom-select">
+                        {% for m_id, m_name in months %}
+                            <option value="{{ m_id }}" {% if m_id == selected_month %}selected{% endif %}>{{ m_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="year" class="form-select border-0 bg-light custom-select">
+                        {% for y in years %}
+                            <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-primary custom-btn">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </form>
+
+                <a href="{% url 'client_create' %}" class="btn btn-dark shadow-sm custom-btn-alt py-2 px-3">
+                    <i class="fas fa-layer-group me-2"></i>Pack Analysis
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-6 col-xl-3">
+            <div class="kpi-card kpi-border-blue">
+                <div class="kpi-icon icon-blue"><i class="fas fa-wallet"></i></div>
+                <div class="kpi-content">
+                    <small class="kpi-label">Chiffre d'Affaires</small>
+                    <h4 class="kpi-value">{{ total_ca|floatformat:0 }} <small class="currency">FCFA</small></h4>
+                    <div class="kpi-trend {% if evolution_ca >= 0 %}trend-up{% else %}trend-down{% endif %} mt-1">
+                        <i class="fas {% if evolution_ca >= 0 %}fa-arrow-up{% else %}fa-arrow-down{% endif %}"></i>
+                        {{ evolution_ca }}% <span class="text-muted smaller fw-normal">vs mois dernier</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="kpi-card">
+                <div class="kpi-icon icon-soft-blue"><i class="fas fa-shopping-basket"></i></div>
+                <div class="kpi-content">
+                    <small class="kpi-label">Panier Moyen</small>
+                    <h4 class="kpi-value">{{ panier_moyen|floatformat:0 }} <small class="currency">FCFA</small></h4>
+                    <span class="badge rounded-pill bg-soft-blue text-primary smaller">
+                        Médiane : {{ panier_mediane|floatformat:0 }} FCFA
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="kpi-card">
+                <div class="kpi-icon icon-soft-green"><i class="fas fa-percentage"></i></div>
+                <div class="kpi-content">
+                    <small class="kpi-label">Mix Services</small>
+                    <h4 class="kpi-value">{{ services_par_client }}</h4>
+                    <small class="text-muted">Services / ticket</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="kpi-card kpi-dark-premium">
+                <div class="kpi-icon icon-gold"><i class="fas fa-trophy"></i></div>
+                <div class="kpi-content">
+                    <small class="kpi-label text-white-50">Best-Seller</small>
+                    <h5 class="kpi-value text-white text-truncate mb-1" style="max-width: 140px;" title="{{ top_service.nom }}">
+                        {{ top_service.nom|default:"N/A" }}
+                    </h5>
+                    <div class="d-flex flex-column gap-1">
+                        <small class="text-warning fw-bold small">{{ top_service.ca_genere|floatformat:0 }} FCFA</small>
+                        <small class="text-white-50 smaller">
+                            <i class="fas fa-check-circle me-1"></i>{{ total_prestations }} actes
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-lg-8">
+            <div class="premium-card">
+                <div class="card-header-flex mb-4">
+                    <div>
+                        <h5 class="fw-bold mb-0">Affluence & Rentabilité</h5>
+                        <p class="text-muted small mb-0">Performance horaire cumulée</p>
+                    </div>
+                    <div class="chart-legend">
+                        <span class="badge-dot"></span> <small>CA par heure</small>
+                    </div>
+                </div>
+                <div class="chart-container" style="height: 320px;">
+                    <canvas id="heureChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="premium-card">
+                <div class="card-header-flex mb-4">
+                    <h5 class="fw-bold mb-0">Répartition Offre</h5>
+                </div>
+                <div class="chart-container" style="height: 320px;">
+                    <canvas id="catChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+         <div class="col-lg-4">
+            <div class="premium-card">
+                <div class="card-header-flex mb-4">
+                    <h5 class="fw-bold mb-0">Modes de Paiement</h5>
+                </div>
+                <div class="chart-container" style="height: 280px;">
+                    <canvas id="paiementChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="premium-card h-100 bg-white">
+                <h5 class="fw-bold mb-4">Analyse Intelligente</h5>
+                <div class="row g-4">
+                    <div class="col-sm-6">
+                        <div class="insight-box">
+                            <div class="insight-box-icon bg-blue"><i class="fas fa-lightbulb"></i></div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Opportunité</h6>
+                                <p class="smaller text-muted mb-0">Le service <strong>{{ top_service.nom }}</strong> est le moteur de votre CA ce mois-ci.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="insight-box">
+                            <div class="insight-box-icon bg-green"><i class="fas fa-user-clock"></i></div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Optimisation</h6>
+                                <p class="smaller text-muted mb-0">Pic d'activité détecté vers <strong>16h-18h</strong>.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modern-alert mt-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="alert-icon-wrap"><i class="fas fa-rocket"></i></div>
+                        <p class="small mb-0 text-dark">
+                            <strong>Note stratégique :</strong> Avec un panier moyen de {{ panier_moyen|floatformat:0 }} FCFA, une offre complémentaire pourrait booster vos marges.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="premium-card p-0 border-0 overflow-hidden shadow-sm">
+        <div class="p-4 d-flex justify-content-between align-items-center bg-white">
+            <h5 class="fw-bold mb-0">Classement des Prestations</h5>
+            <button class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                <i class="fas fa-file-export me-1"></i>Exporter
+            </button>
+        </div>
+        <div class="table-responsive">
+            {% if has_results %}
+                <table class="table table-hover align-middle mb-0 custom-table">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">Prestation</th>
+                            <th>Catégorie</th>
+                            <th class="text-center">Prix Unit.</th>
+                            <th class="text-center">Volume</th>
+                            <th class="text-end pe-4">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in services_perf %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold text-dark">{{ s.nom_service }}</div>
+                                {% if s.is_pack %}
+                                    <span class="badge bg-soft-info text-info smaller"><i class="fas fa-box-open me-1"></i>{{ s.is_pack }}</span>
+                                {% else %}
+                                    <span class="text-muted smaller">Service Solo</span>
+                                {% endif %}
+                            </td>
+                            <td><span class="custom-badge">{{ s.cat|default:"Général" }}</span></td>
+                            <td class="text-center fw-medium">{{ s.prix_unitaire|floatformat:0 }}</td>
+                            <td class="text-center">
+                                <span class="vol-tag">{{ s.nb_prestations }}</span>
+                            </td>
+                            <td class="text-end pe-4 fw-bold text-primary">
+                                {{ s.ca_genere|floatformat:0 }} <small class="smaller">FCFA</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                    <div>
+                        <span class="text-muted">Page {{ services_perf.number }} sur {{ services_perf.paginator.num_pages }}</span>
+                    </div>
+                    <div class="pagination-buttons">
+                        {% if services_perf.has_previous %}
+                            <a href="?page={{ services_perf.previous_page_number }}&month={{ selected_month }}&year={{ selected_year }}" class="btn btn-sm btn-secondary" style="padding: 5px 10px; margin-right: 5px; text-decoration: none; background: #6c757d; color: white; border-radius: 4px;">Précédent</a>
+                        {% endif %}
+
+                        {% if services_perf.has_next %}
+                            <a href="?page={{ services_perf.next_page_number }}&month={{ selected_month }}&year={{ selected_year }}" class="btn btn-sm btn-primary" style="padding: 5px 10px; text-decoration: none; background: #007bff; color: white; border-radius: 4px;">Suivant</a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-state" style="text-align: center; padding: 40px; background: #f8f9fa; border: 1px dashed #dee2e6; border-radius: 4px; margin-top: 20px;">
+                    <p style="margin-0; color: #6c757d; font-size: 16px;">Aucune donnée de vente ou de prestation pour ce mois.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    /* PRESETS & THEME */
+    :root {
+        --primary: #2563eb;
+        --secondary: #64748b;
+        --dark: #0f172a;
+        --light-blue: #eff6ff;
+        --success: #10b981;
+    }
+
+    .smaller { font-size: 0.78rem; }
+    .bg-soft-blue { background-color: #e0f2fe; }
+    .bg-soft-info { background-color: #ecfeff; }
+
+    .rapport-page {
+        background-color: #f8fafc;
+        color: #334155;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .brand-text {
+        color: var(--primary);
+        font-weight: 800;
+        letter-spacing: -0.5px;
+    }
+
+    /* CARDS */
+    .premium-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.04);
+    }
+
+    .card-header-flex {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* KPI CARDS */
+    .kpi-card {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.08); }
+    .kpi-border-blue { border-bottom: 3px solid var(--primary); }
+    .kpi-dark-premium { background: var(--dark); border: none; }
+
+    .kpi-icon {
+        width: 52px; height: 52px; border-radius: 14px;
+        display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
+    }
+
+    .icon-blue { background: var(--primary); color: white; }
+    .icon-soft-blue { background: #e0f2fe; color: #0369a1; }
+    .icon-soft-green { background: #dcfce7; color: #15803d; }
+    .icon-gold { background: #fef3c7; color: #b45309; }
+
+    .kpi-label { font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.8px; }
+    .kpi-value { font-weight: 800; letter-spacing: -0.5px; margin-bottom: 0; }
+
+    /* TABLE */
+    .custom-table thead th {
+        background: #f8fafc;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #64748b;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 1rem;
+    }
+    
+    .custom-table tbody tr { transition: background 0.2s; }
+    .custom-table tbody td { padding: 1.1rem 1rem; border-bottom: 1px solid #f1f5f9; }
+
+    .custom-badge {
+        background: #f1f5f9;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #475569;
+    }
+
+    .vol-tag {
+        background: #334155;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    /* INSIGHTS */
+    .insight-box { display: flex; gap: 1rem; align-items: center; }
+    .insight-box-icon {
+        width: 42px; height: 42px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .bg-blue { background: #dbeafe; color: var(--primary); }
+    .bg-green { background: #dcfce7; color: var(--success); }
+
+    .modern-alert {
+        background: #fffbeb;
+        border: 1px solid #fef3c7;
+        border-radius: 16px;
+        padding: 1rem;
+    }
+
+    .alert-icon-wrap {
+        width: 36px; height: 36px; background: #fbbf24; color: white;
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    }
+
+    /* CUSTOM SELECT & BTN */
+    .custom-select { cursor: pointer; font-size: 0.9rem; font-weight: 600; }
+    .custom-btn { border-radius: 10px; padding: 0.5rem 1rem; }
+    .custom-btn-alt { border-radius: 10px; font-weight: 600; font-size: 0.9rem; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Ajout du plugin pour afficher les étiquettes de données -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+<script>
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = '#94a3b8';
+
+    // 1. Chart Heure (Barres stylisées)
+    new Chart(document.getElementById('heureChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ heures_labels|safe }},
+            datasets: [{
+                data: {{ heures_data|safe }},
+                backgroundColor: '#2563eb',
+                borderRadius: 6,
+                hoverBackgroundColor: '#1d4ed8'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { display: false },
+                datalabels: { display: false } // Pas d'étiquettes sur les barres pour éviter la surcharge
+            },
+            scales: {
+                y: { grid: { color: '#f1f5f9' }, border: { display: false } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // 2. Chart Catégories (Donut fin)
+    new Chart(document.getElementById('catChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ cat_labels|safe }},
+            datasets: [{
+                data: {{ cat_data_ca|safe }},
+                backgroundColor: ['#2563eb', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e'],
+                borderWidth: 4,
+                borderColor: '#ffffff'
+            }]
+        },
+        plugins: [ChartDataLabels], // Activation du plugin
+        options: {
+            cutout: '70%', // Légèrement réduit (de 80% à 70%) pour laisser de l'espace au texte
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 15 } },
+                datalabels: {
+                    color: '#ffffff',
+                    font: { weight: 'bold', size: 11 },
+                    formatter: (value, ctx) => {
+                        let sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                        return sum > 0 ? ((value * 100) / sum).toFixed(1) + "%" : "";
+                    }
+                }
+            }
+        }
+    });
+
+    // 3. Chart Paiements (Pie)
+    new Chart(document.getElementById('paiementChart'), {
+        type: 'pie',
+        data: {
+            labels: {{ paiement_labels|safe }},
+            datasets: [{
+                data: {{ paiement_data|safe }},
+                backgroundColor: ['#10b981', '#3b82f6', '#f59e0b'],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        plugins: [ChartDataLabels], // Activation du plugin
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 15 } },
+                datalabels: {
+                    color: '#ffffff',
+                    font: { weight: 'bold', size: 11 },
+                    formatter: (value, ctx) => {
+                        let sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                        return sum > 0 ? ((value * 100) / sum).toFixed(1) + "%" : "";
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
+
+
+
+
+
+<!-- 
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">Rapport d'Activité <span class="text-primary">BEL'R</span></h2>
+        <form class="d-flex gap-2">
+            <select name="month" class="form-select shadow-sm">
+                {% for m_id, m_name in months %}
+                    <option value="{{ m_id }}" {% if m_id == selected_month %}selected{% endif %}>{{ m_name }}</option>
+                {% endfor %}
+            </select>
+            <select name="year" class="form-select shadow-sm">
+                {% for y in years %}
+                    <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary shadow-sm">Filtrer</button>
+        </form>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 border-start border-primary border-4">
+                <small class="text-muted text-uppercase fw-bold">Chiffre d'Affaires</small>
+                <h4 class="fw-bold mb-0">{{ total_ca|floatformat:0 }} FCFA</h4>
+                <small class="{% if evolution_ca >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ evolution_ca }}% vs mois dernier
+                </small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3">
+                <small class="text-muted text-uppercase fw-bold">Valeur Panier</small>
+                <h4 class="fw-bold mb-0">{{ panier_moyen|floatformat:0 }} <small class="fs-6">FCFA</small></h4>
+                <small class="text-primary">Médiane : <strong>{{ panier_mediane|floatformat:0 }} FCFA</strong></small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3">
+                <small class="text-muted text-uppercase fw-bold">Vente Croisée</small>
+                <h4 class="fw-bold mb-0">{{ services_par_client }}</h4>
+                <small class="text-muted">Services par client en moyenne</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 bg-dark text-white">
+                <small class="text-white-50 text-uppercase fw-bold">Top Service</small>
+                <h5 class="fw-bold mb-0 text-truncate" title="{{ top_service.nom }}">{{ top_service.nom|default:"-" }}</h5>
+                <small class="text-success">{{ top_service.ca_genere|floatformat:0 }} FCFA</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0 fw-bold">Détails des Prestations</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Service</th>
+                        <th>Catégorie</th>
+                        <th class="text-center">Prix Unitaire</th>
+                        <th class="text-center">Volume</th>
+                        <th class="text-end">CA Généré</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in services_perf %}
+                    <tr>
+                        <td class="fw-bold">{{ s.nom }}</td>
+                        <td><span class="badge bg-light text-dark">{{ s.categorie }}</span></td>
+                        <td class="text-center">{{ s.prix|floatformat:0 }} FCFA</td>
+                        <td class="text-center">
+                            <span class="badge bg-primary rounded-pill">{{ s.nb_prestations }}</span>
+                        </td>
+                        <td class="text-end fw-bold text-success">{{ s.ca_genere|floatformat:0 }} FCFA</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Config Chart.js
+    const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#5a5c69'];
+
+    // Donut Catégories
+    new Chart(document.getElementById("catChart"), {
+        type: 'doughnut',
+        data: {
+            labels: {{ cat_labels|safe }},
+            datasets: [{ data: {{ cat_data_ca|safe }}, backgroundColor: colors }]
+        },
+        options: { plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // Bar Heures
+    new Chart(document.getElementById("heureChart"), {
+        type: 'bar',
+        data: {
+            labels: {{ heures_labels|safe }},
+            datasets: [{ label: 'CA par heure', data: {{ heures_data|safe }}, backgroundColor: '#4e73df' }]
+        }
+    });
+
+    // Bar Paiements
+    new Chart(document.getElementById("paiementChart"), {
+        type: 'pie',
+        data: {
+            labels: {{ paiement_labels|safe }},
+            datasets: [{ data: {{ paiement_data|safe }}, backgroundColor: ['#1cc88a', '#f6c23e', '#4e73df'] }]
+        }
+    });
+</script>
+-->

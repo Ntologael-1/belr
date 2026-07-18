@@ -1,0 +1,656 @@
+
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if form.instance.pk %}Modifier Paiement{% else %}Nouveau Paiement{% endif %} | BEL'R
+{% endblock %}
+
+{% block page_title %}
+    <div class="d-flex align-items-center">
+        <div class="icon-box bg-primary-light me-3">
+            <i class="fas fa-cash-register text-primary"></i>
+        </div>
+        <div>
+            <span class="text-muted small d-block">Gestion BEL'R</span>
+            <h4 class="mb-0 fw-bold">
+                {% if form.instance.pk %}Éditer le Paiement{% else %}Enregistrement Vente{% endif %}
+            </h4>
+        </div>
+    </div>
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item">
+    <a href="{% url 'dashboard' %}" class="text-decoration-none">BEL'R</a>
+</li>
+<li class="breadcrumb-item active">
+    {% if form.instance.pk %}Modification{% else %}Nouveau Paiement{% endif %}
+</li>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <select id="listeEmployesSource" style="display: none;">
+        <option value="" disabled selected>-- Choisir un intervenant --</option>
+        {% for emp in employes %}
+            <option value="{{ emp.id }}">{{ emp.nom_complet }}</option>
+        {% empty %}
+            <option value="">Aucun employé disponible</option>
+        {% endfor %}
+    </select>
+
+    <form id="mainForm" method="post" class="h-100">
+        {% csrf_token %}
+        <input type="hidden" name="prestations_json" id="prestations_json">
+
+        <div class="row h-100">
+            
+            <div class="col-lg-5 h-100">
+                <div class="sticky-top-custom">      
+                    <div class="card shadow-sm mb-3 border-0 rounded-3">
+                        <div class="card-body">
+                            <h5 class="section-title mb-3" style="font-size: 1.1rem; color: #444;">
+                                <i class="fas fa-receipt me-2 text-primary"></i>Détails de la vente
+                            </h5>
+                            <div class="row g-2">
+                                <div class="col-md-7">
+                                    <input type="text" name="client_nom" id="client_nom" 
+                                        class="form-control form-control-lg fs-6 border-secondary-subtle text-dark" 
+                                        style="background-color: #f8f9fa; border: 1px solid #ced4da; transition: all 0.2s ease-in-out;"
+                                        placeholder="Nom du client (Optionnel)" 
+                                        value="{{ recu_client.nom_client|default:'' }}"
+                                        onfocus="this.style.backgroundColor='#ffffff'; this.style.borderColor='#0d6efd'; this.style.boxShadow='0 0 0 0.25rem rgba(13, 110, 253, 0.15)';"
+                                        onblur="this.style.backgroundColor='#f8f9fa'; this.style.borderColor='#ced4da'; this.style.boxShadow='none';">
+                                </div>
+                                
+                                <div class="col-md-5">
+                                    <select name="mode_paiement" 
+                                            class="form-select form-select-lg text-dark fw-medium" 
+                                            style="font-size: 0.875rem; height: calc(2.875rem + 2px); background-color: #f8f9fa; border: 1px solid #ced4da; transition: all 0.2s ease-in-out;" 
+                                            required
+                                            onfocus="this.style.backgroundColor='#ffffff'; this.style.borderColor='#0d6efd'; this.style.boxShadow='0 0 0 0.25rem rgba(13, 110, 253, 0.15)';"
+                                            onblur="this.style.backgroundColor='#f8f9fa'; this.style.borderColor='#ced4da'; this.style.boxShadow='none';">
+                                        <option value="" disabled {% if not recu_client.mode_paiement %}selected{% endif %}>Règlement...</option>
+                                        <option value="ESPECE" {% if recu_client.mode_paiement == 'ESPECE' %}selected{% endif %}>💵 Espèces</option>
+                                        <option value="MOBILE_MONEY" {% if recu_client.mode_paiement == 'MOBILE_MONEY' %}selected{% endif %}>📱 MoMo / OM</option>
+                                        <option value="CARTE" {% if recu_client.mode_paiement == 'CARTE' %}selected{% endif %}>💳 Carte Bancaire</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="employesContainer"></div>
+
+                    <button type="button" onclick="addEmployeCard()" class="btn btn-outline-primary btn-sm w-100 mb-3 border-dashed py-2">
+                        <i class="fas fa-user-plus me-1"></i> Ajouter un autre intervenant
+                    </button>
+
+                    <div class="total-box shadow-lg rounded-4 p-4 text-white text-center mb-3">
+                        <small class="d-block text-uppercase mb-1" style="letter-spacing: 2px; opacity: 0.9; font-size: 0.7rem;">Total à payer</small>
+                        <div class="d-flex justify-content-center align-items-baseline">
+                            <span id="totalGlobal" class="h1 fw-bold mb-0">0</span>
+                            <span class="ms-2 h4 mb-0" style="opacity: 0.8;">FCFA</span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success w-100 py-3 fw-bold shadow-lg rounded-3 btn-valider">
+                        <i class="fas fa-check-circle me-2"></i> VALIDER ET ENREGISTRER
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-lg-7 h-100">
+                <div class="card shadow-sm border-0 rounded-3 services-container"> 
+                    <div class="card-header bg-white py-3 border-0">
+                        <div class="input-group bg-light rounded-3 p-1">
+                            <span class="input-group-text bg-transparent border-0"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" id="serviceSearch" class="form-control border-0 bg-transparent" placeholder="Rechercher une prestation...">
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <ul class="nav nav-pills mb-4 gap-2" id="pills-tab">
+                            {% for cat in categories %}
+                            <li class="nav-item">
+                                <button type="button" class="nav-link {% if forloop.first %}active{% endif %} btn-sm rounded-pill px-3" 
+                                        data-bs-toggle="pill" data-bs-target="#cat-{{ cat.id }}">
+                                    {{ cat.nom }}
+                                </button>
+                            </li>
+                            {% endfor %}
+                        </ul>
+
+                        <div class="tab-content">
+                            {% for cat in categories %}
+                            <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="cat-{{ cat.id }}">
+                                <div class="row g-2">
+                                    {% for s in cat.actifs %}
+                                    <div class="col-md-4 service-item-card" data-nom="{{ s.nom|lower }}">
+                                        <div class="card h-100 border-0 shadow-sm btn-service transition-all" 
+                                             onclick="selectService('{{ s.id }}', '{{ s.nom }}', '{{ s.prix }}', '{{ s.est_un_pack|yesno:'true,false' }}')"
+                                             style="border-top: 4px solid {{ s.couleur|default:'#0d6efd' }} !important; cursor:pointer;">
+                                            <div class="card-body p-3">
+                                                <div class="text-dark fw-semibold mb-1" style="font-size: 0.9rem;">{{ s.nom }}</div>
+                                                <div class="text-primary fw-bold" style="font-size: 1rem;">{{ s.prix|floatformat:0 }} <small>FCFA</small></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+<div class="modal fade" id="packModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white py-3">
+                <h5 class="modal-title fw-bold" id="packTitle">Configuration du Pack</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small mb-4">Attribuez chaque service du pack à un intervenant :</p>
+                <div id="packServicesList" class="d-flex flex-column gap-3"></div>
+            </div>
+            <div class="modal-footer border-0 p-4 pt-0">
+                <button type="button" class="btn btn-primary w-100 py-2 fw-bold" onclick="confirmPackAssignment()">
+                    CONFIRMER LE PACK
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root { 
+        --primary-color: #0d6efd; 
+        --success-color: #198754; 
+    }
+
+    .container-fluid {
+        height: calc(100vh - 120px); 
+        overflow: hidden;
+    }
+
+    .row.h-100, .col-lg-5.h-100, .col-lg-7.h-100 {
+        height: 100% !important;
+    }
+
+    .sticky-top-custom { 
+        height: 100%;
+        overflow-y: auto; 
+        padding-right: 10px; 
+        padding-bottom: 40px; 
+    }
+
+    .services-container { 
+        height: 100%; 
+        overflow-y: auto; 
+    }
+
+    .btn-service {
+        cursor: pointer;
+    }
+    .btn-service:hover { 
+        transform: translateY(-4px); 
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12) !important; 
+    }
+    .transition-all { 
+        transition: all 0.25s ease; 
+    }
+
+    .total-box { 
+        background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    .total-box::after {
+        content: ""; 
+        position: absolute; 
+        top: -50%; 
+        left: -50%; 
+        width: 200%; 
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+
+    .border-dashed { 
+        border: 2px dashed #cbd5e0 !important; 
+        background: #f8fafc; 
+        color: #64748b; 
+    }
+    .border-dashed:hover { 
+        background: #f1f5f9; 
+        border-color: var(--primary-color) !important; 
+        color: var(--primary-color); 
+    }
+    .employe-card.active { 
+        border: 2px solid var(--primary-color) !important; 
+        background-color: #f0f7ff; 
+    }
+    .btn-valider { 
+        transition: all 0.3s; 
+        border: none; 
+        background: #198754; 
+    }
+    .btn-valider:hover { 
+        background: #157347; 
+        transform: scale(1.02); 
+    }
+
+    .sticky-top-custom::-webkit-scrollbar, 
+    .services-container::-webkit-scrollbar {
+        width: 6px; 
+    }
+    .sticky-top-custom::-webkit-scrollbar-track, 
+    .services-container::-webkit-scrollbar-track {
+        background: transparent; 
+    }
+    .sticky-top-custom::-webkit-scrollbar-thumb, 
+    .services-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1; 
+        border-radius: 10px;
+    }
+    .sticky-top-custom::-webkit-scrollbar-thumb:hover, 
+    .services-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8; 
+    }
+
+    .sticky-top-custom, 
+    .services-container {
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 transparent;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+window.onload = function() {
+    const money = new Intl.NumberFormat('fr-FR');
+    const mainForm = document.getElementById('mainForm');
+    
+    let currentPackPrice = 0;
+    let currentPackInstanceId = null; 
+
+    mainForm.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            return false;
+        }
+    });
+
+    // --- 1. CRÉER UNE CARTE EMPLOYÉ ---
+    window.addEmployeCard = function() {
+        const container = document.getElementById("employesContainer");
+        const sourceOptions = document.getElementById("listeEmployesSource").innerHTML;
+        const card = document.createElement("div");
+        card.className = "card mb-3 shadow-sm employe-card transition-all";
+        card.style.border = "2px solid transparent";
+
+        card.innerHTML = `
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <select class="form-select form-select-sm fw-bold select-employe-id w-75 border-0 bg-light" required onchange="updateTotals()">
+                        ${sourceOptions} 
+                    </select>
+                    <button type="button" class="btn-close btn-sm" onclick="this.closest('.employe-card').remove(); updateTotals();"></button>
+                </div>
+                <div class="selected-services-list py-2 px-2 rounded bg-white border" style="min-height: 50px;">
+                    <p class="text-muted small text-center m-0 empty-msg">Sélectionnez une prestation</p>
+                </div>
+                <div class="text-end border-top mt-2 pt-1">
+                    <span class="fw-bold text-primary employe-total">0</span> <small class="text-primary fw-bold">FCFA</small>
+                </div>
+            </div>
+        `;
+
+        card.onclick = function() {
+            document.querySelectorAll('.employe-card').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+        };
+
+        container.appendChild(card);
+        card.click();
+        updateTotals();
+    };
+
+    // --- 2. FONCTION D'AJOUT À L'INTERFACE DISCRÈTEMENT MODIFIÉE POUR LE RENDU DU PACK ---
+    window.addServiceToUI = function(card, id, nom, prix, packId = null, packInstId = null, packNom = null) {
+        if (!card) return;
+        const list = card.querySelector('.selected-services-list');
+        const emptyMsg = list.querySelector('.empty-msg');
+        if (emptyMsg) emptyMsg.remove();
+
+        let existingItem = list.querySelector(`.service-data[data-id="${id}"][data-pack-instance="${packInstId}"]`);
+
+        if (existingItem && !packId) { 
+            let parentDiv = existingItem.closest('.d-flex');
+            let qtySpan = parentDiv.querySelector('.qty-value');
+            let currentQty = parseInt(existingItem.dataset.quantite || 1);
+            
+            currentQty += 1;
+            existingItem.dataset.quantite = currentQty;
+            qtySpan.innerText = currentQty + 'x';
+        } else {
+            const item = document.createElement('div');
+            item.className = "d-flex justify-content-between align-items-center border-bottom py-2";
+            const packAttr = packId ? `data-pack-id="${packId}" data-pack-instance="${packInstId}"` : "";
+            
+            // AJUSTEMENT : Ajout d'un badge premium discret si le service provient d'un pack
+            let packBadgeHTML = "";
+            if(packId && packNom) {
+                packBadgeHTML = `<span class="badge bg-primary bg-opacity-10 text-primary ms-2" style="font-size:0.65rem; font-weight:600;"><i class="fas fa-box small me-1"></i>${packNom}</span>`;
+            }
+
+            item.innerHTML = `
+                <div class="d-flex align-items-center flex-wrap" style="max-width: 70%;">
+                    <span class="badge bg-secondary me-2 qty-value">1x</span>
+                    <span style="font-size:0.85rem;" class="text-dark fw-medium">${nom}</span>
+                    ${packBadgeHTML}
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="fw-bold small">${money.format(Math.round(prix))}</span>
+                    <input type="hidden" class="service-data" 
+                        data-id="${id}" 
+                        data-prix="${prix}" 
+                        data-quantite="1" 
+                        ${packAttr}>
+                    <button type="button" class="btn btn-sm text-danger ms-2 p-0" onclick="decrementService(this)">
+                        <i class="fas fa-minus-circle"></i>
+                    </button>
+                </div>
+            `;
+            list.appendChild(item);
+        }
+        updateTotals();
+    };
+
+    window.decrementService = function(btn) {
+        const itemData = btn.parentElement.querySelector('.service-data');
+        const packInstId = itemData.dataset.packInstance;
+        let qty = parseInt(itemData.dataset.quantite);
+
+        if (packInstId && packInstId !== "null") {
+            if (confirm("Ce service fait partie d'un pack. Supprimer ce service annulera tout le pack pour tous les employés. Confirmer ?")) {
+                removeFullPack(packInstId);
+            }
+        } else {
+            if (qty > 1) {
+                qty -= 1;
+                itemData.dataset.quantite = qty;
+                btn.closest('.d-flex').parentElement.querySelector('.qty-value').innerText = qty + 'x';
+            } else {
+                const list = btn.closest('.selected-services-list');
+                btn.closest('.d-flex').parentElement.remove();
+                
+                if (list.querySelectorAll('.service-data').length === 0) {
+                    list.innerHTML = '<p class="text-muted small text-center m-0 empty-msg">Sélectionnez une prestation</p>';
+                }
+            }
+        }
+        updateTotals();
+    };
+
+    window.removeFullPack = function(packInstId) {
+        const allPackItems = document.querySelectorAll(`.service-data[data-pack-instance="${packInstId}"]`);
+        allPackItems.forEach(item => {
+            const row = item.closest('.d-flex').parentElement; 
+            const list = row.parentElement; 
+            row.remove();
+            if (list.querySelectorAll('.service-data').length === 0) {
+                list.innerHTML = '<p class="text-muted small text-center m-0 empty-msg">Sélectionnez une prestation</p>';
+            }
+        });
+    };
+
+    // --- 3. SÉLECTION DEPUIS LE CATALOGUE ---
+    window.selectService = function(id, nom, prix, isPack) {
+        if (isPack === 'true') {
+            currentPackPrice = parseFloat(prix);
+            currentPackInstanceId = "pack_" + Date.now(); 
+            openPackModal(id, nom);
+            return;
+        }
+
+        let activeCard = document.querySelector('.employe-card.active') || document.querySelector('.employe-card');
+        if (!activeCard) {
+            addEmployeCard();
+            activeCard = document.querySelector('.employe-card');
+        }
+        addServiceToUI(activeCard, id, nom, parseFloat(prix));
+    };
+
+    // --- 4. MODALE PACK MODIFIÉE ---
+    function openPackModal(packId, packNom) {
+        const modalElement = document.getElementById('packModal');
+        const modal = new bootstrap.Modal(modalElement);
+        document.getElementById('packTitle').innerText = packNom;
+        
+        let url = "{% url 'get_pack_details' 0 %}".replace('0', packId);
+        fetch(url).then(res => res.json()).then(data => {
+            const list = document.getElementById('packServicesList');
+            const sourceOptions = document.getElementById("listeEmployesSource").innerHTML;
+            list.innerHTML = '';
+            data.services.forEach(s => {
+                // AJUSTEMENT : On embarque le nom du pack parent (packNom) dans l'attribut data-pack-nom
+                list.innerHTML += `
+                    <div class="pack-item p-2 border rounded bg-white shadow-sm" 
+                         data-service-id="${s.id}" 
+                         data-pack-id="${packId}" 
+                         data-pack-nom="${packNom}" 
+                         data-prix-base="${s.prix}">
+                        <div class="small fw-bold mb-1 text-primary">${s.nom}</div>
+                        <select class="form-select form-select-sm pack-employe-select" required>${sourceOptions}</select>
+                    </div>`;
+            });
+            modal.show();
+        });
+    }
+
+    window.confirmPackAssignment = function() {
+        const items = document.querySelectorAll('.pack-item');
+        
+        let valid = true;
+        items.forEach(i => {
+            if(!i.querySelector('.pack-employe-select').value) valid = false;
+        });
+        if(!valid) {
+            alert("Veuillez sélectionner un intervenant pour chaque service du pack.");
+            return;
+        }
+
+        let totalTheorique = 0;
+        items.forEach(i => totalTheorique += parseFloat(i.dataset.prixBase));
+
+        items.forEach(item => {
+            const serviceId = item.dataset.serviceId;
+            const packId = item.dataset.packId;
+            const packNom = item.dataset.packNom; // AJUSTEMENT : Récupération du nom du pack
+            const serviceNom = item.querySelector('.fw-bold').innerText;
+            const prixBase = parseFloat(item.dataset.prixBase);
+            const empIdChoisi = item.querySelector('.pack-employe-select').value;
+            
+            const prixProRata = (currentPackPrice * prixBase) / totalTheorique;
+
+            let targetCard = Array.from(document.querySelectorAll('.employe-card')).find(c => 
+                c.querySelector('.select-employe-id').value === empIdChoisi
+            );
+
+            if (!targetCard) {
+                addEmployeCard();
+                targetCard = document.querySelector('#employesContainer').lastChild;
+                targetCard.querySelector('.select-employe-id').value = empIdChoisi;
+            }
+            // AJUSTEMENT : On passe packNom à la fonction addServiceToUI
+            addServiceToUI(targetCard, serviceId, serviceNom, prixProRata, packId, currentPackInstanceId, packNom); 
+        });
+        
+        bootstrap.Modal.getInstance(document.getElementById('packModal')).hide();
+        updateTotals();
+    };
+
+    // --- 5. CALCULS ET GÉNÉRATION DU JSON FINAL ---
+    window.updateTotals = function() {
+        let globalTotal = 0;
+        const finalData = [];
+
+        document.querySelectorAll('.employe-card').forEach(card => {
+            let cardTotal = 0;
+            const empId = card.querySelector('.select-employe-id').value;
+            
+            card.querySelectorAll('.service-data').forEach(s => {
+                const p = parseFloat(s.dataset.prix) || 0;
+                cardTotal += p;
+                
+                finalData.push({
+                    employe_id: empId,
+                    service_id: s.dataset.id,
+                    pack_id: s.dataset.packId || null,
+                    pack_instance_id: s.dataset.packInstance || null,
+                    prix_reel: p,
+                    quantite: s.dataset.quantite || 1
+                });
+            });
+            card.querySelector('.employe-total').textContent = money.format(Math.round(cardTotal));
+            globalTotal += cardTotal;
+        });
+
+        const totalDisplay = document.getElementById('totalGlobal');
+        if(totalDisplay) totalDisplay.textContent = money.format(Math.round(globalTotal));
+        document.getElementById('prestations_json').value = JSON.stringify(finalData);
+    };
+
+    document.getElementById('serviceSearch').addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll('.service-item-card').forEach(card => {
+            card.style.display = card.dataset.nom.includes(term) ? 'block' : 'none';
+        });
+    });
+
+    // --- 6. INITIALISATION (ÉDITION / CRÉATION) ---
+    const initialData = JSON.parse('{{ prestations_initiales|safe }}');
+    
+    if (initialData && initialData.length > 0) {
+        document.getElementById("employesContainer").innerHTML = "";
+
+        initialData.forEach(item => {
+            let targetCard = Array.from(document.querySelectorAll('.employe-card')).find(c => 
+                c.querySelector('.select-employe-id').value === item.employe_id
+            );
+
+            if (!targetCard) {
+                addEmployeCard();
+                targetCard = document.querySelector('#employesContainer').lastChild;
+                targetCard.querySelector('.select-employe-id').value = item.employe_id;
+            }
+
+            addServiceToUI(targetCard, item.service_id, item.nom_service, item.prix_reel, item.pack_id, item.pack_instance_id, item.nom_pack);
+        });
+    } else {
+        addEmployeCard();
+    }
+
+    updateTotals();
+};
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,266 @@
+{% load auth_extras %}
+
+<style>
+    /* Variables Locales de l'identité BEL'R */
+    :root {
+        --belr-pink-dark: #D42A5B;
+        --belr-pink-light: #FF6B8B;
+        --belr-gradient: linear-gradient(135deg, #FF6B8B 0%, #D42A5B 100%);
+        --belr-soft-bg: rgba(255, 107, 139, 0.05);
+        --dark-color: #2D3047;
+    }
+
+    /* Conteneur de la Sidebar - Bloqué à 100% de la hauteur de l'écran */
+    .sidebar {
+        background: #ffffff;
+        border-right: 1px solid #e6e9f0;
+        height: 100vh;
+        width: 280px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+        box-shadow: 0 0 30px rgba(212, 42, 91, 0.04);
+        display: flex;
+        flex-direction: column; 
+    }
+
+    /* RESTAURATION : Logo à sa taille et ses paddings d'origine */
+    .sidebar-logo {
+        padding: 2rem 1.5rem; /* Marges généreuses d'origine */
+        border-bottom: 1px solid #f5f7fb;
+        text-align: center;
+        flex-shrink: 0;
+    }
+    
+    .sidebar-logo h3.salon-brand {
+        margin: 0 0 0.2rem 0;
+        font-family: 'Playfair Display', serif;
+        font-weight: 700;
+        font-size: 1.75rem; /* Retour à la grande taille initiale */
+        background: var(--belr-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.5px;
+    }
+
+    .sidebar-logo small {
+        font-size: 0.78rem; /* Retour à la taille initiale */
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        text-uppercase: uppercase;
+        color: #a0aec0;
+    }
+
+    /* Liste de Navigation défilante */
+    .sidebar .nav {
+        flex: 1;
+        padding: 1rem 0;
+        overflow-y: auto;
+        -ms-overflow-style: none;  
+        scrollbar-width: none;  
+    }
+
+    .sidebar .nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .sidebar .nav-item {
+        margin: 0.2rem 1rem;
+    }
+
+    /* Liens de navigation avec texte forcé sur une seule ligne */
+    .sidebar .nav-link {
+        color: #718096;
+        padding: 0.85rem 1.2rem;
+        border-radius: 12px;
+        transition: all 0.25s ease;
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+        font-size: 0.92rem;
+        gap: 12px;
+        white-space: nowrap; 
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sidebar .nav-link i {
+        font-size: 1.1rem;
+        width: 24px;
+        text-align: center;
+        transition: transform 0.25s ease;
+    }
+
+    /* États Hover & Active Premium */
+    .sidebar .nav-link:hover {
+        color: var(--belr-pink-dark);
+        background-color: var(--belr-soft-bg);
+    }
+
+    .sidebar .nav-link:hover i {
+        transform: scale(1.05);
+    }
+
+    .sidebar .nav-link.active {
+        background: var(--belr-gradient);
+        color: #ffffff !important;
+        box-shadow: 0 8px 20px rgba(212, 42, 91, 0.25);
+        font-weight: 600;
+    }
+
+    .sidebar .nav-link.active i {
+        color: #ffffff !important;
+    }
+
+    /* Badges */
+    .sidebar .badge-rdv {
+        background: rgba(255, 107, 139, 0.15);
+        color: var(--belr-pink-dark);
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 8px;
+    }
+
+    .sidebar .nav-link.active .badge-rdv {
+        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+    }
+
+    /* Zone Basse Fixe pour le profil */
+    .sidebar-footer {
+        margin-top: auto;
+        background: #ffffff;
+        flex-shrink: 0;
+    }
+
+    /* Profil Utilisateur */
+    .sidebar .user-profile {
+        border-top: 1px solid #f5f7fb;
+        background: #ffffff;
+        padding: 1.25rem 1.5rem;
+    }
+
+    .sidebar .avatar-circle {
+        width: 40px;
+        height: 40px;
+        background: var(--belr-gradient);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 10px rgba(212, 42, 91, 0.15);
+    }
+
+    .sidebar .user-info strong {
+        color: #2d3748;
+        font-size: 0.9rem;
+        display: block;
+    }
+
+    .sidebar .logout-icon {
+        color: #e53e3e;
+        font-size: 1.15rem;
+        transition: transform 0.2s;
+    }
+    .sidebar .logout-icon:hover {
+        transform: scale(1.1);
+    }
+</style>
+
+<div class="sidebar">
+    <div class="sidebar-logo">
+        <h3 class="salon-brand">
+            <i class="fas fa-cut me-1"></i> BEL'R
+        </h3>
+        <small>Gestion Salon Premium</small>
+    </div>
+    
+    <nav class="nav flex-column">
+
+        <div class="nav-item">
+            <a class="nav-link {% if 'employes' in request.resolver_match.app_names %}active{% endif %}" href="{% url 'employes_list' %}">
+                <i class="fas fa-user-tie"></i>
+                Collaborateurs
+            </a>
+        </div>
+
+
+       <div class="nav-item">
+            <a class="nav-link {% if 'services' in request.path %}active{% endif %}" href="{% url 'services_list' %}">
+                <i class="fas fa-spa"></i>
+                Offres & Services
+            </a>
+        </div>
+
+        
+        
+        {% if request.user|is_manager_or_above %} 
+             
+            <div class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Tableau de Bord
+                </a>
+            </div>
+        
+            <div class="nav-item">
+                <a class="nav-link {% if 'rendezvous' in request.resolver_match.app_names %}active{% endif %}" href="{% url 'paiement' %}">
+                    <i class="fas fa-wallet"></i>
+                    Paiements
+                    <span class="badge badge-rdv ms-auto" id="rdv-count">0</span>
+                </a>
+            </div>
+            
+            <div class="nav-item">
+                <a class="nav-link {% if 'clients' in request.resolver_match.app_names %}active{% endif %}" href="{% url 'clients_list' %}">
+                    <i class="fas fa-chart-pie"></i>
+                    Stats Services
+                </a>
+            </div>                     
+
+            <div class="nav-item">
+                <a class="nav-link {% if 'inventaire' in request.resolver_match.app_names %}active{% endif %}" href="{% url 'inventaire:liste_produits' %}">
+                    <i class="fas fa-boxes"></i>
+                    Suivi des Stocks
+                </a>
+            </div>
+        {% endif %}
+
+        {% if request.user|has_group:"Gérant" %}
+            <div class="nav-item">
+                <a class="nav-link {% if 'rapports' in request.resolver_match.app_names %}active{% endif %}" href="{% url 'rapports:rapport_global' %}">
+                    <i class="fas fa-chart-line"></i>
+                    Rapports D'Activités
+                </a>
+            </div>
+        {% endif %}
+    </nav>
+    
+    <div class="sidebar-footer w-100">
+        <div class="user-profile w-100">
+            <div class="d-flex align-items-center">
+                <div class="avatar me-3">
+                    <div class="avatar-circle">
+                        <i class="fas fa-user text-white" style="font-size: 0.9rem;"></i>
+                    </div>
+                </div>
+                <div class="user-info">
+                    <strong>{{ user.get_full_name|default:user.username }}</strong>
+                    <div class="small text-muted mt-1">
+                        {% if user.is_staff %}
+                            <span class="badge bg-success">Admin</span>
+                        {% else %}
+                            <span class="badge bg-info">Coiffeur</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <a href="{% url 'logout' %}" class="ms-auto logout-icon" title="Déconnexion">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

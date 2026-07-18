@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+
+{% block title %}Annuler le Rendez-vous #{{ rdv.code }}{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-times-circle me-2 text-danger"></i>Annuler le Rendez-vous
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+<li class="breadcrumb-item"><a href="{% url 'rendezvous_list' %}">Rendez-vous</a></li>
+<li class="breadcrumb-item"><a href="{% url 'rendezvous_detail' rdv.pk %}">#{{ rdv.code }}</a></li>
+<li class="breadcrumb-item active">Annuler</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="stat-card">
+            <div class="text-center mb-5">
+                <div class="cancel-icon mb-4">
+                    <div class="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center" 
+                         style="width: 100px; height: 100px;">
+                        <i class="fas fa-times-circle fa-3x text-danger"></i>
+                    </div>
+                </div>
+                
+                <h3 class="mb-3">Annuler ce rendez-vous ?</h3>
+                <p class="text-muted">
+                    Vous êtes sur le point d'annuler le rendez-vous suivant. Cette action enverra une notification au client.
+                </p>
+            </div>
+            
+            <!-- Appointment Details -->
+            <div class="appointment-details mb-5">
+                <div class="detail-card p-4 rounded" 
+                     style="background-color: rgba(138, 43, 226, 0.05);">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <small class="text-muted">Client</small>
+                                <div class="h5">{{ rdv.client.nom_complet }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <small class="text-muted">Coiffeur</small>
+                                <div class="h5">{{ rdv.employe.nom_complet }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <small class="text-muted">Date et heure</small>
+                                <div class="h5">
+                                    {{ rdv.date_heure|date:"d/m/Y" }} à {{ rdv.date_heure|time:"H:i" }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <small class="text-muted">Service</small>
+                                <div class="h5">{{ rdv.service.nom }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <small class="text-muted">Montant</small>
+                                <div class="h4 text-success">{{ rdv.montant }}€</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <small class="text-muted">Statut actuel</small>
+                                <div>
+                                    {% if rdv.statut == 'CONFIRME' %}
+                                    <span class="badge badge-confirme">Confirmé</span>
+                                    {% elif rdv.statut == 'PLANIFIE' %}
+                                    <span class="badge badge-planifie">Planifié</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cancellation Options -->
+            <div class="cancellation-options mb-5">
+                <h6 class="mb-3">
+                    <i class="fas fa-comment-alt me-2 text-warning"></i>
+                    Options d'annulation
+                </h6>
+                
+                <div class="mb-4">
+                    <label class="form-label">Raison de l'annulation</label>
+                    <select class="form-select" id="cancellationReason">
+                        <option value="">Sélectionner une raison</option>
+                        <option value="client">Annulation client</option>
+                        <option value="coiffeur">Indisponibilité coiffeur</option>
+                        <option value="urgence">Urgence médicale</option>
+                        <option value="autre">Autre raison</option>
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label">Message au client (optionnel)</label>
+                    <textarea class="form-control" id="clientMessage" rows="3" 
+                              placeholder="Message qui sera envoyé au client..."></textarea>
+                    <div class="form-text">
+                        Ce message sera envoyé par SMS et/ou email au client
+                    </div>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="sendNotification" checked>
+                    <label class="form-check-label" for="sendNotification">
+                        Envoyer une notification au client
+                    </label>
+                </div>
+                
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="offerReschedule">
+                    <label class="form-check-label" for="offerReschedule">
+                        Proposer un nouveau créneau
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="d-flex justify-content-between pt-4 border-top">
+                <a href="{% url 'rendezvous_detail' rdv.pk %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Retour
+                </a>
+                
+                <form method="post" class="d-inline" id="cancelForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="raison" id="raisonInput">
+                    <input type="hidden" name="message" id="messageInput">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times-circle me-1"></i> Confirmer l'annulation
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Warning -->
+            <div class="alert alert-warning mt-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                    <div>
+                        <strong>Attention</strong>
+                        <div class="mt-1">
+                            Cette action ne peut pas être annulée. Le créneau sera libéré pour d'autres rendez-vous.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Alternative Slots -->
+        <div class="stat-card mt-4" id="alternativeSlots" style="display: none;">
+            <h6 class="mb-3">
+                <i class="fas fa-calendar-plus me-2 text-success"></i>
+                Créneaux alternatifs suggérés
+            </h6>
+            
+            <div class="alternative-slots">
+                <div class="slot-item p-3 rounded mb-2" 
+                     style="background-color: rgba(0, 212, 170, 0.05);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-bold">Demain 14:00</div>
+                            <div class="small text-muted">Avec {{ rdv.employe.nom_complet }}</div>
+                        </div>
+                        <button class="btn btn-sm btn-success">
+                            <i class="fas fa-check me-1"></i> Proposer
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="slot-item p-3 rounded mb-2" 
+                     style="background-color: rgba(0, 212, 170, 0.05);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-bold">Après-demain 10:30</div>
+                            <div class="small text-muted">Avec {{ rdv.employe.nom_complet }}</div>
+                        </div>
+                        <button class="btn btn-sm btn-success">
+                            <i class="fas fa-check me-1"></i> Proposer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .cancel-icon {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+    
+    .detail-card {
+        border: 1px solid rgba(138, 43, 226, 0.2);
+    }
+    
+    .slot-item {
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+    }
+    
+    .slot-item:hover {
+        border-color: var(--primary-color);
+        transform: translateX(5px);
+    }
+</style>
+
+{% block extra_js %}
+<script>
+    // Show alternative slots when checkbox is checked
+    document.getElementById('offerReschedule').addEventListener('change', function() {
+        const alternativeSlots = document.getElementById('alternativeSlots');
+        alternativeSlots.style.display = this.checked ? 'block' : 'none';
+    });
+    
+    // Form submission
+    document.getElementById('cancelForm').addEventListener('submit', function(e) {
+        const reason = document.getElementById('cancellationReason').value;
+        const message = document.getElementById('clientMessage').value;
+        
+        if (!reason) {
+            e.preventDefault();
+            alert('Veuillez sélectionner une raison d\'annulation');
+            return;
+        }
+        
+        document.getElementById('raisonInput').value = reason;
+        document.getElementById('messageInput').value = message;
+        
+        if (!confirm('Êtes-vous sûr de vouloir annuler ce rendez-vous ?')) {
+            e.preventDefault();
+        }
+    });
+    
+    // Auto-focus on reason select
+    document.getElementById('cancellationReason').focus();
+</script>
+{% endblock %}
+{% endblock %}

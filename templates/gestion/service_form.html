@@ -1,0 +1,913 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+{% if service %}Modifier {{ service.nom }}{% else %}Nouveau Service{% endif %}
+{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-spa me-2"></i>
+{% if service %}Modifier le Service{% else %}Nouveau Service{% endif %}
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+<li class="breadcrumb-item"><a href="{% url 'services_list' %}">Services</a></li>
+<li class="breadcrumb-item active">
+    {% if service %}Modifier{% else %}Nouveau{% endif %}
+</li>
+{% endblock %}
+
+
+<!-- <div class="row justify-content-center">
+    <div class="col-xl-8">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="mb-1">
+                        {% if service %}
+                        <span style="color: {{ service.couleur|default:'#8A2BE2' }};">
+                            {{ service.nom }}
+                        </span>
+                        {% else %}
+                        Créer un nouveau service
+                        {% endif %}
+                    </h4>
+                    <p class="text-muted mb-0">
+                        {% if service %}
+                        Modifier les détails de ce service
+                        {% else %}
+                        Ajouter un nouveau service au catalogue
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="service-preview">
+                    <div class="preview-card" 
+                         style="background-color: {{ form.couleur.value|default:'#8A2BE2' }}20; 
+                                border-color: {{ form.couleur.value|default:'#8A2BE2' }};">
+                        <div class="preview-icon" 
+                             style="color: {{ form.couleur.value|default:'#8A2BE2' }};">
+                            <i class="fas fa-cut"></i>
+                        </div>
+                        <div class="preview-name">
+                            {{ form.nom.value|default:"Nom du service" }}
+                        </div>
+                        <div class="preview-price">
+                            {{ form.prix.value|default:"0" }}€
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <form method="post" id="serviceForm" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                
+                <div class="form-section mb-5">
+                    <h5 class="mb-4 border-bottom pb-3">
+                        <i class="fas fa-info-circle me-2 text-primary"></i>
+                        Informations de base
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.code|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.categorie|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.nom|as_crispy_field }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.description|as_crispy_field }}
+                    </div>
+                </div>
+                
+            
+                <div class="form-section mb-5">
+                    <h5 class="mb-4 border-bottom pb-3">
+                        <i class="fas fa-cog me-2 text-success"></i>
+                        Détails du service
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="duration-input">
+                                <label class="form-label">Durée (minutes)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" 
+                                           name="duree" min="5" step="5" 
+                                           value="{{ form.duree.value|default:30 }}" 
+                                           id="dureeInput" required>
+                                    <span class="input-group-text">min</span>
+                                </div>
+                                <div class="duration-options mt-2">
+                                    <small class="text-muted">Options rapides:</small>
+                                    <div class="btn-group btn-group-sm mt-1">
+                                        <button type="button" class="btn btn-outline-secondary" 
+                                                data-duration="15">15min</button>
+                                        <button type="button" class="btn btn-outline-secondary" 
+                                                data-duration="30">30min</button>
+                                        <button type="button" class="btn btn-outline-secondary" 
+                                                data-duration="45">45min</button>
+                                        <button type="button" class="btn btn-outline-secondary" 
+                                                data-duration="60">1h</button>
+                                        <button type="button" class="btn btn-outline-secondary" 
+                                                data-duration="90">1h30</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.prix|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="commission-slider">
+                                <label class="form-label">
+                                    Commission coiffeur: 
+                                    <span id="commissionValue">{{ form.commission.value|default:50 }}</span>%
+                                </label>
+                                <input type="range" class="form-range" min="0" max="100" step="1" 
+                                       name="commission" 
+                                       value="{{ form.commission.value|default:50 }}"
+                                       id="commissionSlider">
+                                <div class="d-flex justify-content-between small text-muted mt-1">
+                                    <span>0%</span>
+                                    <span>25%</span>
+                                    <span>50%</span>
+                                    <span>75%</span>
+                                    <span>100%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Couleur d'affichage</label>
+                            <div class="color-selector">
+                                <div class="input-group">
+                                    <input type="color" class="form-control form-control-color" 
+                                           name="couleur" 
+                                           value="{{ form.couleur.value|default:'#8A2BE2' }}"
+                                           id="colorPicker">
+                                    <input type="text" class="form-control" 
+                                           value="{{ form.couleur.value|default:'#8A2BE2' }}"
+                                           id="colorHex" readonly>
+                                </div>
+                                <div class="color-presets mt-2">
+                                    {% for color in couleurs_presets %}
+                                       <div class="color-preset"
+                                          style="background-color: {{ color }};"
+                                          data-color="{{ color }}">
+                                       </div>
+                                   {% endfor %}
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                <div class="form-section mb-5">
+                    <h5 class="mb-4 border-bottom pb-3">
+                        <i class="fas fa-chart-line me-2 text-warning"></i>
+                        Paramètres avancés
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="profit-calculator p-3 rounded" 
+                                 style="background-color: rgba(0, 212, 170, 0.05);">
+                                <h6 class="mb-3">Calculateur de rentabilité</h6>
+                                <div class="mb-2">
+                                    <label class="form-label small">Coût matière (€)</label>
+                                    <input type="number" class="form-control form-control-sm" 
+                                           step="0.01" min="0" id="costInput" value="0">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Temps préparation (min)</label>
+                                    <input type="number" class="form-control form-control-sm" 
+                                           min="0" id="prepTimeInput" value="0">
+                                </div>
+                                <div class="result mt-3">
+                                    <div class="d-flex justify-content-between small">
+                                        <span>Marge:</span>
+                                        <strong id="marginResult">0%</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between small">
+                                        <span>Rentabilité horaire:</span>
+                                        <strong id="hourlyProfitResult">0€/h</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="p-3">
+                                {{ form.actif|as_crispy_field }}
+                                
+                                <div class="mt-4">
+                                    <label class="form-label">Tags</label>
+                                    <div class="tags-input">
+                                        <div class="selected-tags mb-2" id="selectedTags">
+                                            
+                                        </div>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" 
+                                                   id="tagInput" placeholder="Ajouter un tag...">
+                                            <button class="btn btn-outline-primary" 
+                                                    type="button" id="addTagBtn">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                        <div class="suggested-tags mt-2">
+                                            <small class="text-muted">Suggestions:</small>
+                                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                                {% for tag in tags_suggestions %}
+                                                   <span class="badge bg-light text-dark tag-suggestion"
+                                                      data-tag="{{ tag }}">
+                                                      {{ tag }}
+                                                    </span>
+                                                {% endfor %}
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                <div class="d-flex justify-content-between pt-4 border-top">
+                    <div>
+                        <a href="{% url 'services_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Annuler
+                        </a>
+                    </div>
+                    
+                    <div class="btn-group">
+                        {% if service %}
+                        <a href="{% url 'service_delete' service.pk %}" 
+                           class="btn btn-outline-danger">
+                            <i class="fas fa-trash me-1"></i> Supprimer
+                        </a>
+                        {% endif %}
+                        
+                        <button type="submit" class="btn btn-saloon">
+                            <i class="fas fa-save me-1"></i> 
+                            {% if service %}Mettre à jour{% else %}Créer le service{% endif %}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        
+        {% if service %}
+        <div class="stat-card mt-4">
+            <h5 class="mb-4">
+                <i class="fas fa-chart-bar me-2 text-info"></i>
+                Statistiques du service
+            </h5>
+            
+            <div class="row">
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="text-center">
+                        <div class="h2 text-primary mb-1">24</div>
+                        <div class="small text-muted">RDV ce mois</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="text-center">
+                        <div class="h2 text-success mb-1">1 200€</div>
+                        <div class="small text-muted">CA généré</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="text-center">
+                        <div class="h2 text-warning mb-1">4.8</div>
+                        <div class="small text-muted">Satisfaction</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="text-center">
+                        <div class="h2 text-info mb-1">85%</div>
+                        <div class="small text-muted">Taux de remplissage</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <canvas id="serviceChart" height="100"></canvas>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div> -->
+
+
+{% block content %}
+
+<style>
+    .service-preview {
+        flex-shrink: 0;
+    }
+    
+    .preview-card {
+        width: 180px;
+        padding: 1rem;
+        border-radius: 12px;
+        border: 2px solid;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .preview-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .preview-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        font-size: 1rem;
+    }
+    
+    .preview-price {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--dark-color);
+    }
+    
+    .duration-options .btn {
+        border-radius: 6px;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .commission-slider {
+        padding: 1rem;
+        background-color: rgba(0, 0, 0, 0.02);
+        border-radius: 10px;
+    }
+    
+    .color-selector .form-control-color {
+        height: 45px;
+        width: 45px;
+        padding: 0;
+        border: none;
+    }
+    
+    .color-presets {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .color-preset {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .color-preset:hover {
+        transform: scale(1.1);
+        border-color: var(--dark-color);
+    }
+    
+    .profit-calculator {
+        border: 1px solid rgba(0, 212, 170, 0.2);
+    }
+    
+    .tags-input .selected-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        min-height: 34px;
+    }
+    
+    .tag {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .tag-remove {
+        cursor: pointer;
+        font-size: 0.75rem;
+    }
+    
+    .tag-suggestion {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .tag-suggestion:hover {
+        background-color: var(--primary-color) !important;
+        color: white !important;
+    }
+</style>
+
+
+<!-- 
+<script>
+    // Update preview in real-time
+    const previewCard = document.querySelector('.preview-card');
+    const previewIcon = previewCard.querySelector('.preview-icon');
+    const previewName = previewCard.querySelector('.preview-name');
+    const previewPrice = previewCard.querySelector('.preview-price');
+    
+    // Name update
+    document.querySelector('input[name="nom"]').addEventListener('input', function() {
+        previewName.textContent = this.value || 'Nom du service';
+    });
+    
+    // Price update
+    document.querySelector('input[name="prix"]').addEventListener('input', function() {
+        previewPrice.textContent = (this.value || '0') + '€';
+        calculateProfitability();
+    });
+    
+    // Color update
+    const colorPicker = document.getElementById('colorPicker');
+    const colorHex = document.getElementById('colorHex');
+    
+    colorPicker.addEventListener('input', function() {
+        const color = this.value;
+        colorHex.value = color;
+        previewCard.style.backgroundColor = color + '20';
+        previewCard.style.borderColor = color;
+        previewIcon.style.color = color;
+    });
+    
+    // Color presets
+    document.querySelectorAll('.color-preset').forEach(preset => {
+        preset.addEventListener('click', function() {
+            const color = this.getAttribute('data-color');
+            colorPicker.value = color;
+            colorHex.value = color;
+            previewCard.style.backgroundColor = color + '20';
+            previewCard.style.borderColor = color;
+            previewIcon.style.color = color;
+        });
+    });
+    
+    // Duration quick buttons
+    document.querySelectorAll('[data-duration]').forEach(button => {
+        button.addEventListener('click', function() {
+            const duration = this.getAttribute('data-duration');
+            document.getElementById('dureeInput').value = duration;
+        });
+    });
+    
+    // Commission slider
+    const commissionSlider = document.getElementById('commissionSlider');
+    const commissionValue = document.getElementById('commissionValue');
+    
+    commissionSlider.addEventListener('input', function() {
+        commissionValue.textContent = this.value;
+    });
+    
+    // Tags functionality
+    const tagInput = document.getElementById('tagInput');
+    const addTagBtn = document.getElementById('addTagBtn');
+    const selectedTags = document.getElementById('selectedTags');
+    
+    let tags = [];
+    
+    function addTag(tagText) {
+        if (tagText && !tags.includes(tagText)) {
+            tags.push(tagText);
+            
+            const tagElement = document.createElement('span');
+            tagElement.className = 'tag';
+            tagElement.innerHTML = `
+                ${tagText}
+                <span class="tag-remove" data-tag="${tagText}">
+                    <i class="fas fa-times"></i>
+                </span>
+            `;
+            
+            selectedTags.appendChild(tagElement);
+            tagInput.value = '';
+        }
+    }
+    
+    addTagBtn.addEventListener('click', () => addTag(tagInput.value.trim()));
+    
+    tagInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addTag(tagInput.value.trim());
+        }
+    });
+    
+    selectedTags.addEventListener('click', (e) => {
+        if (e.target.closest('.tag-remove')) {
+            const tagToRemove = e.target.closest('.tag-remove').getAttribute('data-tag');
+            tags = tags.filter(tag => tag !== tagToRemove);
+            e.target.closest('.tag').remove();
+        }
+    });
+    
+    // Suggested tags
+    document.querySelectorAll('.tag-suggestion').forEach(suggestion => {
+        suggestion.addEventListener('click', function() {
+            addTag(this.getAttribute('data-tag'));
+        });
+    });
+    
+    // Profitability calculator
+    const costInput = document.getElementById('costInput');
+    const prepTimeInput = document.getElementById('prepTimeInput');
+    const marginResult = document.getElementById('marginResult');
+    const hourlyProfitResult = document.getElementById('hourlyProfitResult');
+    
+    function calculateProfitability() {
+        const price = parseFloat(document.querySelector('input[name="prix"]').value) || 0;
+        const cost = parseFloat(costInput.value) || 0;
+        const prepTime = parseFloat(prepTimeInput.value) || 0;
+        const serviceTime = parseFloat(document.getElementById('dureeInput').value) || 30;
+        const totalTime = (prepTime + serviceTime) / 60; // in hours
+        
+        if (price > 0 && cost >= 0) {
+            const margin = ((price - cost) / price) * 100;
+            const hourlyProfit = totalTime > 0 ? (price - cost) / totalTime : 0;
+            
+            marginResult.textContent = margin.toFixed(1) + '%';
+            hourlyProfitResult.textContent = hourlyProfit.toFixed(2) + '€/h';
+            
+            // Color code margin
+            if (margin > 50) {
+                marginResult.className = 'text-success';
+            } else if (margin > 20) {
+                marginResult.className = 'text-warning';
+            } else {
+                marginResult.className = 'text-danger';
+            }
+        }
+    }
+    
+    costInput.addEventListener('input', calculateProfitability);
+    prepTimeInput.addEventListener('input', calculateProfitability);
+    document.getElementById('dureeInput').addEventListener('input', calculateProfitability);
+    
+    // Initialize
+    calculateProfitability();
+    
+    // Service statistics chart (if service exists)
+    {% if service %}
+    const ctx = document.getElementById('serviceChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
+            datasets: [{
+                label: 'Nombre de prestations',
+                data: [12, 19, 15, 25, 22, 30],
+                borderColor: '{{ service.couleur|default:"#8A2BE2" }}',
+                backgroundColor: '{{ service.couleur|default:"#8A2BE2" }}20',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    {% endif %}
+</script>
+-->
+
+
+
+
+
+
+
+<div class="row justify-content-center">
+    <div class="col-xl-8">
+        <div class="stat-card shadow-sm p-4 bg-white rounded-4">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                <div>
+                    <h4 class="mb-1 text-dark fw-bold">
+                        <i class="fas fa-plus-circle me-2 text-primary"></i>Nouveau Service
+                    </h4>
+                    <p class="text-muted mb-0">Définissez les tarifs et caractéristiques pour BEL'R.</p>
+                </div>
+
+                <div class="service-preview d-none d-md-block">
+                    <div id="previewCard" class="preview-card"
+                         style="background-color: {{ form.couleur.value|default:'#007bff' }}20;
+                                border: 2px solid {{ form.couleur.value|default:'#007bff' }};
+                                border-radius: 15px; padding: 15px; width: 180px; text-align: center;">
+                        <div id="previewIconWrapper"
+                             style="color: {{ form.couleur.value|default:'#007bff' }}; font-size: 2rem; margin-bottom: 10px;">
+                            <i class="fas {% if form.est_un_pack.value %}fa-boxes{% else %}fa-cut{% endif %}" id="mainIcon"></i>
+                        </div>
+                        <div class="fw-bold text-truncate" id="previewName">{{ form.nom.value|default:"Nom" }}</div>
+                        <div class="fw-extrabold" id="previewPrice">{{ form.prix.value|default:"0" }} FCFA</div>
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" id="serviceForm" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger rounded-3">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <!-- Informations générales -->
+                <div class="form-section mb-4">
+                    <h6 class="text-primary text-uppercase fw-bold small mb-3 border-bottom pb-2">
+                        Informations Générales
+                    </h6>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            {{ form.code|as_crispy_field }}
+                        </div>
+                        <div class="col-md-8 mb-3">
+                            {{ form.nom|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            {{ form.categorie|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.description|as_crispy_field }}
+                    </div>
+                </div>
+
+                <!-- Configuration du pack -->
+                <div class="form-section mb-4 p-3 rounded-4 bg-light border-start border-4 border-primary">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                        <div>
+                            <h6 class="mb-0 fw-bold text-dark">Configuration du Pack</h6>
+                            <small class="text-muted">Activez cette option uniquement si ce service regroupe plusieurs services simples.</small>
+                        </div>
+                        <div class="ms-md-3">
+                            {{ form.est_un_pack|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <div id="packConfiguration" class="mt-3" style="display: {% if form.est_un_pack.value %}block{% else %}none{% endif %};">
+                        <div class="p-3 bg-white rounded-4 border shadow-sm">
+                            <label class="form-label fw-bold mb-3">
+                                <i class="fas fa-layer-group me-2 text-primary"></i>
+                                Services inclus dans ce pack
+                            </label>
+
+                            {% if form.services_inclus.errors %}
+                            <div class="alert alert-danger py-2 mb-3 rounded-3">
+                                {{ form.services_inclus.errors }}
+                            </div>
+                            {% endif %}
+
+                            {% if form.fields.services_inclus.queryset.exists %}
+                                <div class="row g-3" id="servicesInclusWrapper">
+                                    {% for checkbox in form.services_inclus %}
+                                    <div class="col-md-6">
+                                        <label class="service-choice-card d-flex align-items-center gap-3 p-3 rounded-4 border bg-white w-100"
+                                               style="cursor:pointer; transition: all 0.2s ease;">
+                                            <div class="form-check m-0">
+                                                {{ checkbox.tag }}
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="fw-semibold text-dark">{{ checkbox.choice_label }}</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning mb-0 rounded-3">
+                                    Aucun service simple actif disponible pour composer un pack.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarification -->
+                <div class="form-section mb-4">
+                    <h6 class="text-success text-uppercase fw-bold small mb-3 border-bottom pb-2">
+                        Tarification & Temps
+                    </h6>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.prix|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.duree|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visibilité -->
+                <div class="form-section mb-4">
+                    <h6 class="text-warning text-uppercase fw-bold small mb-3 border-bottom pb-2">
+                        Visibilité
+                    </h6>
+
+                    <div class="row align-items-center">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Couleur du service</label>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <input type="color"
+                                       class="form-control form-control-color"
+                                       id="colorPicker"
+                                       name="couleur"
+                                       value="{{ form.couleur.value|default:'#007bff' }}">
+
+                                <div class="d-flex gap-1 flex-wrap">
+                                    {% for color in couleurs_presets %}
+                                    <div class="color-swatch"
+                                         style="background-color: {{ color }}; width: 25px; height: 25px; border-radius: 5px; cursor: pointer; border: 2px solid rgba(0,0,0,0.08);"
+                                         data-color="{{ color }}"></div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            {{ form.actif|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-between align-items-center pt-4 border-top">
+                    <a href="{% url 'services_list' %}" class="btn btn-outline-secondary px-4 rounded-3">
+                        Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg px-5 shadow rounded-3">
+                        Enregistrer le Service
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const estPackSwitch = document.querySelector('#id_est_un_pack');
+    const packSection = document.getElementById('packConfiguration');
+    const priceInput = document.querySelector('#id_prix');
+    const nomInput = document.querySelector('#id_nom');
+    const colorPicker = document.querySelector('#colorPicker');
+
+    const previewName = document.getElementById('previewName');
+    const previewPrice = document.getElementById('previewPrice');
+    const mainIcon = document.getElementById('mainIcon');
+    const previewCard = document.getElementById('previewCard');
+    const previewIconWrapper = document.getElementById('previewIconWrapper');
+
+    const serviceCheckboxes = document.querySelectorAll('input[name="services_inclus"]');
+
+    // 1. Gestion de l'UI pack
+    function updatePackUI() {
+        if (!estPackSwitch) return;
+
+        const isChecked = estPackSwitch.checked;
+
+        // Affiche / masque la zone
+        packSection.style.display = isChecked ? 'block' : 'none';
+
+        // Change l'icône preview
+        if (mainIcon) {
+            mainIcon.className = isChecked ? 'fas fa-boxes' : 'fas fa-cut';
+        }
+
+        // Active / désactive les checkboxes
+        serviceCheckboxes.forEach(cb => {
+            cb.disabled = !isChecked;
+
+            // Si on décoche "pack", on vide les services cochés
+            if (!isChecked) {
+                cb.checked = false;
+            }
+        });
+    }
+
+    // 2. Preview nom
+    if (nomInput && previewName) {
+        nomInput.addEventListener('input', function (e) {
+            previewName.textContent = e.target.value || "Nom";
+        });
+    }
+
+    // 3. Preview prix
+    if (priceInput && previewPrice) {
+        priceInput.addEventListener('input', function (e) {
+            previewPrice.textContent = (e.target.value || "0") + " FCFA";
+        });
+    }
+
+    // 4. Gestion des couleurs
+    function updateColorPreview(color) {
+        if (previewCard) {
+            previewCard.style.borderColor = color;
+            previewCard.style.backgroundColor = color + '20';
+        }
+        if (previewIconWrapper) {
+            previewIconWrapper.style.color = color;
+        }
+    }
+
+    if (colorPicker) {
+        colorPicker.addEventListener('input', function (e) {
+            updateColorPreview(e.target.value);
+        });
+    }
+
+    document.querySelectorAll('.color-swatch').forEach(swatch => {
+        swatch.addEventListener('click', function () {
+            const color = this.dataset.color;
+            if (colorPicker) {
+                colorPicker.value = color;
+            }
+            updateColorPreview(color);
+        });
+    });
+
+    // 5. Style visuel des cartes cochées
+    function refreshServiceCards() {
+        document.querySelectorAll('.service-choice-card').forEach(card => {
+            const checkbox = card.querySelector('input[type="checkbox"]');
+            if (!checkbox) return;
+
+            if (checkbox.checked) {
+                card.classList.add('border-primary', 'shadow-sm');
+                card.style.backgroundColor = '#f8fbff';
+            } else {
+                card.classList.remove('border-primary', 'shadow-sm');
+                card.style.backgroundColor = '#ffffff';
+            }
+
+            if (checkbox.disabled) {
+                card.style.opacity = '0.6';
+                card.style.pointerEvents = 'none';
+            } else {
+                card.style.opacity = '1';
+                card.style.pointerEvents = 'auto';
+            }
+        });
+    }
+
+    serviceCheckboxes.forEach(cb => {
+        cb.addEventListener('change', refreshServiceCards);
+    });
+
+    if (estPackSwitch) {
+        estPackSwitch.addEventListener('change', function () {
+            updatePackUI();
+            refreshServiceCards();
+        });
+    }
+
+    // Initialisation
+    updatePackUI();
+    refreshServiceCards();
+});
+</script>
+{% endblock %}

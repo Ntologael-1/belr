@@ -1,0 +1,338 @@
+
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+{% if title %}{{ title }}{% else %}Nouvel Employé{% endif %}
+{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-user-tie me-2"></i>
+{% if title %}{{ title }}{% else %}Nouvel Employé{% endif %}
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+<li class="breadcrumb-item"><a href="{% url 'employes_list' %}">Coiffeurs</a></li>
+<li class="breadcrumb-item active">
+    {% if employe %}Modifier {{ employe.nom_complet }}{% else %}Nouveau{% endif %}
+</li>
+{% endblock %}
+
+{% block content %}
+<style>
+    /* Design Premium SaaS pour les Steppers */
+    .steps { display: flex; justify-content: space-between; position: relative; }
+    .steps::before { content: ''; position: absolute; top: 20px; left: 5%; right: 5%; height: 2px; background-color: #e9ecef; z-index: 1; }
+    .step { position: relative; z-index: 2; background: #fff; padding: 0 10px; text-align: center; }
+    .step-number { width: 40px; height: 40px; border-radius: 50%; background-color: #f8f9fa; color: #adb5bd; display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 0 auto 8px; border: 2px solid #e9ecef; transition: 0.3s; }
+    .step.active .step-number { background: #0d6efd; color: white; border-color: #0d6efd; box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3); }
+    .step-label { font-size: 0.75rem; font-weight: 600; color: #6c757d; text-transform: uppercase; }
+    .step.active .step-label { color: #0d6efd; }
+    
+    .fade-in { animation: fadeIn 0.4s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    /* Style Boutons Jours */
+    .day-checkbox .btn-check:checked + .btn-outline-primary { 
+        background-color: #0d6efd; color: white; border-color: #0d6efd; 
+        transform: scale(1.1); box-shadow: 0 4px 10px rgba(13, 110, 253, 0.4); 
+    }
+    .day-checkbox .btn-outline-primary { border-radius: 8px; transition: all 0.3s; min-width: 70px; }
+    .summary-card { background: #fefefe; }
+</style>
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            
+            <!-- Stepper -->
+            <div class="steps mb-5">
+                <div class="step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Personnel</div>
+                </div>
+                <div class="step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Contrat & Paliers</div>
+                </div>
+                <div class="step" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Planning</div>
+                </div>
+                <div class="step" data-step="4">
+                    <div class="step-number">4</div>
+                    <div class="step-label">Validation</div>
+                </div>
+            </div>
+
+            <!-- Bandeau d'erreurs Django (Fallback) -->
+            {% if user_form.errors or employe_form.errors %}
+                <div class="alert alert-danger shadow-sm border-0 border-start border-danger border-4 mb-4">
+                    <h6 class="fw-bold mb-1"><i class="fas fa-exclamation-circle me-2"></i> Erreurs détectées lors de l'enregistrement</h6>
+                    <div class="small text-muted">Veuillez vérifier les informations saisies dans les différentes étapes.</div>
+                </div>
+            {% endif %}
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" id="employeForm" class="needs-validation" 
+                          action="{% if employe %}{% url 'employe_edit' employe.pk %}{% else %}{% url 'employe_create' %}{% endif %}" novalidate>
+                        {% csrf_token %}
+                        
+                        <div id="steps-container" style="min-height: 400px;">
+                            
+                            <!-- SECTION 1 : PERSONNEL -->
+                            <div class="form-section fade-in" id="section1">
+                                <h5 class="mb-4 border-bottom pb-3 fw-bold text-primary">
+                                    <i class="fas fa-id-card me-2"></i> Profil de base & Accès
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-md-6">{{ user_form.username|as_crispy_field }}</div>
+                                    <div class="col-md-6">{{ user_form.role|as_crispy_field }}</div> 
+                                    <div class="col-md-6">{{ user_form.first_name|as_crispy_field }}</div>
+                                    <div class="col-md-6">{{ user_form.last_name|as_crispy_field }}</div>
+                                    <div class="col-md-6">{{ user_form.email|as_crispy_field }}</div>
+                                    <div class="col-md-6">{{ employe_form.telephone|as_crispy_field }}</div>
+                                    <div class="col-md-6">{{ employe_form.matricule|as_crispy_field }}</div>
+                                    <div class="col-md-6">{{ employe_form.specialite|as_crispy_field }}</div>
+                                </div>
+                                <div class="row mt-3 align-items-end">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small text-muted">Photo de profil</label>
+                                        <div class="file-upload border rounded p-3 text-center bg-light">
+                                            <input type="file" class="form-control" name="photo" accept="image/*" id="photoUpload">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small text-muted">Couleur Calendrier</label>
+                                        {{ employe_form.couleur_calendrier }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SECTION 2 : CONTRAT & PALIERS -->
+                            <div class="form-section fade-in" id="section2" style="display: none;">
+                                <h5 class="mb-4 border-bottom pb-3 fw-bold text-success">
+                                    <i class="fas fa-money-bill-wave me-2"></i> Rémunération & Paliers
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-md-4">{{ employe_form.type_contrat|as_crispy_field }}</div>
+                                    <div class="col-md-4">{{ employe_form.date_embauche|as_crispy_field }}</div>
+                                    <div class="col-md-4">{{ employe_form.salaire_base|as_crispy_field }}</div>
+                                </div>
+
+                                <div class="p-4 rounded border bg-light mt-4">
+                                    <h6 class="fw-bold text-dark mb-3"><i class="fas fa-chart-line me-2"></i>Configuration des Paliers de Performance</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="card card-body border-0 shadow-sm card-input-group">
+                                                <label class="fw-bold small text-muted text-uppercase mb-2">Palier 1 (Déclencheur)</label>
+                                                {{ employe_form.palier_1_ca|as_crispy_field }}
+                                                {{ employe_form.palier_1_percent|as_crispy_field }}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card card-body border-0 shadow-sm card-input-group">
+                                                <label class="fw-bold small text-muted text-uppercase mb-2">Palier 2 (Haute Performance)</label>
+                                                {{ employe_form.palier_2_ca|as_crispy_field }}
+                                                {{ employe_form.palier_2_percent|as_crispy_field }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-info mt-3 mb-0 py-2 small">
+                                        <i class="fas fa-info-circle me-1"></i> Le bonus sera calculé automatiquement sur le CA mensuel.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SECTION 3 : PLANNING -->
+                            <div class="form-section fade-in" id="section3" style="display: none;">
+                                <h5 class="mb-4 border-bottom pb-3 fw-bold text-warning">
+                                    <i class="fas fa-clock me-2"></i> Temps de travail
+                                </h5>
+                                <div class="row mb-4">
+                                    <div class="col-md-6">{{ employe_form.heure_debut|as_crispy_field }}</div>
+                                    <div class="col-md-6">{{ employe_form.heure_fin|as_crispy_field }}</div>
+                                </div>
+                                <div class="mb-4 text-center">
+                                    <label class="form-label d-block mb-3 fw-bold">Jours travaillés</label>
+                                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                                        {% for day in jours_semaine %}
+                                        <div class="day-checkbox">
+                                            <input type="checkbox" class="btn-check" id="day{{ forloop.counter }}" 
+                                                   name="jours_travail" value="{{ day }}" 
+                                                   {% if employe_form.jours_travail.value and day in employe_form.jours_travail.value %}checked{% endif %}>
+                                            <label class="btn btn-outline-primary px-3 py-2 fw-bold" for="day{{ forloop.counter }}">
+                                                {{ day|slice:":3" }}
+                                            </label>
+                                        </div>   
+                                        {% endfor %}
+                                    </div>
+                                    <div id="day-error" class="text-danger small mt-3" style="display:none;">
+                                        <i class="fas fa-exclamation-triangle me-1"></i> Sélectionnez au moins un jour.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SECTION 4 : VALIDATION -->
+                            <div class="form-section fade-in" id="section4" style="display: none;">
+                                <h5 class="mb-4 border-bottom pb-3 fw-bold text-danger">
+                                    <i class="fas fa-clipboard-check me-2"></i> Vérification
+                                </h5>
+                                <div class="summary-card p-4 rounded border bg-light shadow-inner mb-4">
+                                    <h6 class="text-dark fw-bold border-bottom pb-2 mb-3">Récapitulatif BEL'R</h6>
+                                    <div class="row g-3" id="summaryContent"></div>
+                                </div>
+                                
+                                {% if not employe %}
+                                <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center rounded-3">
+                                    <i class="fas fa-key fa-lg me-3 text-warning"></i>
+                                    <div>
+                                        <strong class="d-block mb-0.5">🔑 Sécurité & Accès Employé</strong>
+                                        <span class="small text-muted">Aucun mot de passe n'est requis pour le moment. Une fois validé, l'application va générer un <strong>lien d'activation unique</strong> à copier et envoyer à l'employé pour qu'il configure lui-même ses accès.</span>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                        </div>
+
+                        <!-- Boutons de navigation -->
+                        <div class="d-flex justify-content-between pt-4 mt-4 border-top">
+                            <button type="button" class="btn btn-outline-secondary px-4 shadow-sm" id="prevBtn">
+                                <i class="fas fa-arrow-left me-2"></i>Précédent
+                            </button>
+                            <div>
+                                <button type="button" class="btn btn-primary px-5 shadow-sm" id="nextBtn">
+                                    Suivant <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                                <button type="submit" class="btn btn-success px-5 shadow-sm" id="submitBtn" style="display: none;">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    {% if employe %}Enregistrer les modifications{% else %}Valider la création{% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentSection = 1;
+    const totalSections = 4;
+    
+    function showSection(num) {
+        document.querySelectorAll('.form-section').forEach(s => s.style.display = 'none');
+        document.getElementById(`section${num}`).style.display = 'block';
+        
+        document.querySelectorAll('.step').forEach((s, i) => {
+            s.classList.toggle('active', (i + 1) <= num);
+        });
+
+        document.getElementById('prevBtn').style.visibility = (num === 1) ? 'hidden' : 'visible';
+        document.getElementById('nextBtn').style.display = (num === totalSections) ? 'none' : 'block';
+        document.getElementById('submitBtn').style.display = (num === totalSections) ? 'block' : 'none';
+        
+        if(num === totalSections) updateSummary();
+    }
+
+    // Gestion du clic sur "Suivant" avec affichage de messages d'erreurs ciblés
+    document.getElementById('nextBtn').addEventListener('click', () => {
+        const currentInputs = document.getElementById(`section${currentSection}`).querySelectorAll('input[required], select[required]');
+        let valid = true;
+        
+        currentInputs.forEach(input => {
+            // Recherche d'un éventuel message d'erreur déjà affiché dans le même conteneur parent (.mb-3 généré par Crispy)
+            const wrapper = input.closest('.mb-3');
+            let existingError = wrapper ? wrapper.querySelector('.js-dynamic-error') : null;
+            
+            if (!input.value.trim()) {
+                input.classList.add('is-invalid');
+                valid = false;
+                
+                // Injection du texte d'erreur s'il n'existe pas déjà
+                if (!existingError && wrapper) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'text-danger small mt-1 fw-semibold js-dynamic-error';
+                    errorDiv.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i> Ce champ est obligatoire.';
+                    wrapper.appendChild(errorDiv);
+                }
+            } else {
+                input.classList.remove('is-invalid');
+                if (existingError) {
+                    existingError.remove();
+                }
+            }
+        });
+
+        // Validation spécifique de l'Étape 3 (Jours travaillés)
+        if (currentSection === 3) {
+            const checkedDays = document.querySelectorAll('input[name="jours_travail"]:checked');
+            if (checkedDays.length === 0) {
+                document.getElementById('day-error').style.display = 'block';
+                valid = false;
+            } else {
+                document.getElementById('day-error').style.display = 'none';
+            }
+        }
+
+        // Progression si tout est valide
+        if(valid && currentSection < totalSections) { 
+            currentSection++; 
+            showSection(currentSection); 
+            window.scrollTo(0,0);
+        }
+    });
+
+    // Nettoyage visuel de l'erreur en temps réel dès que l'utilisateur remplit le champ
+    document.getElementById('employeForm').addEventListener('input', function(e) {
+        if (e.target.required && e.target.value.trim()) {
+            e.target.classList.remove('is-invalid');
+            const wrapper = e.target.closest('.mb-3');
+            const errorMsg = wrapper ? wrapper.querySelector('.js-dynamic-error') : null;
+            if (errorMsg) errorMsg.remove();
+        }
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+        if(currentSection > 1) { 
+            currentSection--; 
+            showSection(currentSection); 
+        }
+    });
+
+    function updateSummary() {
+        const summary = document.getElementById('summaryContent');
+        const getVal = (name) => {
+            const el = document.querySelector(`[name="${name}"]`);
+            return el ? el.value : '---';
+        };
+
+        const roleEl = document.querySelector('[name="role"]');
+        const roleText = roleEl && roleEl.selectedIndex >= 0 ? roleEl.options[roleEl.selectedIndex].text : '---';
+
+        const selectedDays = Array.from(document.querySelectorAll('input[name="jours_travail"]:checked'))
+                                   .map(cb => cb.value).join(', ');
+
+        summary.innerHTML = `
+            <div class="col-md-6"><strong><i class="fas fa-user me-2"></i>Nom Complet :</strong> ${getVal('first_name')} ${getVal('last_name')}</div>
+            <div class="col-md-6"><strong><i class="fas fa-at me-2"></i>Identifiant / Email :</strong> ${getVal('username')} (${getVal('email')})</div>
+            <div class="col-md-6"><strong><i class="fas fa-shield-alt me-2"></i>Rôle Système :</strong> <span class="badge bg-secondary">${roleText}</span></div>
+            <div class="col-md-6"><strong><i class="fas fa-tag me-2"></i>Matricule :</strong> ${getVal('matricule')}</div>
+            <div class="col-md-6"><strong><i class="fas fa-wallet me-2"></i>Salaire de Base :</strong> ${getVal('salaire_base')} FCFA</div>
+            <div class="col-md-6"><strong><i class="fas fa-percentage me-2"></i>Commission :</strong> ${getVal('palier_1_percent')}% (dès ${getVal('palier_1_ca')} FCFA)</div>
+            <div class="col-md-6"><strong><i class="fas fa-calendar-alt me-2"></i>Jours assignés :</strong> <span class="badge bg-primary">${selectedDays || 'Aucun'}</span></div>
+            <div class="col-md-6"><strong><i class="fas fa-clock me-2"></i>Horaires :</strong> de ${getVal('heure_debut')} à ${getVal('heure_fin')}</div>
+        `;
+    }
+
+    showSection(1);
+});
+</script>
+{% endblock %}

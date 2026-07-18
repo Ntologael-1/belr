@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+{% if title %}{{ title }}{% else %}Nouvel Employé{% endif %}
+{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-user-tie me-2"></i>
+{% if title %}{{ title }}{% else %}Nouvel Employé{% endif %}
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+<li class="breadcrumb-item"><a href="{% url 'employes_list' %}">Coiffeurs</a></li>
+<li class="breadcrumb-item active">
+    {% if employe %}Modifier {{ employe.nom_complet }}{% else %}Nouveau{% endif %}
+</li>
+{% endblock %}
+
+
+
+{% block content %}
+<div class="container py-5">
+    <div class="card shadow-sm border-0 rounded-4 max-w-600 mx-auto bg-white p-4">
+        <div class="text-center mb-4">
+            <div class="display-6 text-success mb-2">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h4 class="fw-bold text-slate-800">
+                {% if is_reset %}Réinitialisation d'accès{% else %}Compte employé prêt !{% endif %}
+            </h4>
+            <p class="text-muted small">Copiez le lien ci-dessous et transmettez-le à <strong>{{ employe.nom_complet }}</strong> pour qu'il configure son mot de passe.</p>
+        </div>
+
+        <div class="bg-light p-3 rounded-3 border mb-4 text-center">
+            <code class="text-primary small d-block mb-2 text-break" id="activationLink">{{ lien }}</code>
+            <button onclick="copierLien()" class="btn btn-sm btn-dark rounded-pill px-3">
+                <i class="fas fa-copy me-1"></i> Copier le lien
+            </button>
+        </div>
+
+        <div class="text-center">
+            <a href="{% url 'employe_detail' employe.pk %}" class="btn btn-outline-secondary rounded-pill btn-sm px-4">
+                Voir la fiche de l'employé
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function copierLien() {
+    var copyText = document.getElementById("activationLink").innerText;
+    navigator.clipboard.writeText(copyText);
+    alert("Lien copié dans le presse-papiers ! Vous pouvez l'envoyer via WhatsApp.");
+}
+</script>
+{% endblock %}

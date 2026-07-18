@@ -1,0 +1,367 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    :root {
+        --primary-brand: #475569;
+        --surface-card: #ffffff;
+        --background-app: #f8fafc;
+        --border-muted: #e2e8f0;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --accent-success: #15803d;
+        --accent-danger: #b91c1c;
+    }
+
+    body { background: var(--background-app); color: var(--text-main); }
+
+    .card-premium {
+        background: var(--surface-card);
+        border: 1px solid var(--border-muted);
+        box-shadow: 0 4px 15px -3px rgba(15, 23, 42, 0.02) !important;
+    }
+
+    .form-control, .form-select {
+        border-radius: 10px !important;
+        border: 1px solid var(--border-muted);
+        padding: 0.55rem 0.75rem;
+        font-size: 0.9rem;
+        color: var(--text-main);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-brand);
+        box-shadow: none;
+    }
+
+    /* Classe d'erreur forcée rouge SaaS Premium */
+    .form-control.is-invalid, .form-select.is-invalid {
+        border-color: var(--accent-danger) !important;
+        background-image: none !important;
+        box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1) !important;
+    }
+
+    .invalid-feedback-custom {
+        color: var(--accent-danger);
+        font-size: 0.78rem;
+        margin-top: 0.35rem;
+        font-weight: 500;
+        display: block;
+    }
+
+    .input-group-text {
+        border-radius: 0 10px 10px 0 !important;
+        border: 1px solid var(--border-muted);
+        border-left: none;
+        background-color: #f8fafc;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    .form-check-input:checked {
+        background-color: var(--primary-brand);
+        border-color: var(--primary-brand);
+    }
+
+    .bg-slate-icon {
+        background: #f1f5f9;
+        color: var(--primary-brand);
+    }
+
+    .table-formset th {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        font-weight: 600;
+        padding-bottom: 8px;
+    }
+</style>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10"> 
+            
+            {% if messages %}
+            <div class="alert alert-danger border-0 shadow-sm p-4 mb-4 rounded-4" style="background-color: #fef2f2; color: var(--accent-danger);">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-exclamation-triangle fa-lg me-3 mt-1"></i>
+                    <div>
+                        <h5 class="fw-bold mb-1" style="font-size: 1rem;">Données invalides</h5>
+                        <p class="mb-0 small">Certains champs de saisie bloquent l'enregistrement. Vérifiez les éléments marqués en rouge ci-dessous.</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card border-0 rounded-4 card-premium">
+                <div class="card-body p-5">
+                    
+                    <div class="d-flex align-items-center mb-5">
+                        <div class="bg-slate-icon p-3 rounded-3 me-3 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                            <i class="fas {% if est_edition %}fa-pen-to-square{% else %}fa-plus-circle{% endif %} fa-lg"></i>
+                        </div>
+                        <div>
+                            <h2 class="fw-bold mb-0 text-dark" style="font-size: 1.4rem;">
+                                {% if est_edition %}Modifier l'article : {{ produit.nom }}{% else %}Nouveau Produit{% endif %}
+                            </h2>
+                            <p class="text-muted mb-0" style="font-size: 0.85rem;">Configuration de l'article et de son rendement par service de **BEL'R**</p>
+                        </div>
+                    </div>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row g-4">
+                            <div class="col-md-8 field-container">
+                                <label class="form-label fw-semibold text-dark small">Nom du produit</label>
+                                {{ form.nom }}
+                                {% for error in form.nom.errors %}
+                                    <div class="invalid-feedback-custom"><i class="fas fa-info-circle me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="col-md-4 field-container">
+                                <label class="form-label fw-semibold text-dark small">Code / Réf</label>
+                                {{ form.code }}
+                                {% for error in form.code.errors %}
+                                    <div class="invalid-feedback-custom"><i class="fas fa-info-circle me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="col-md-6 field-container">
+                                <label class="form-label fw-semibold text-dark small">Catégorie</label>
+                                {{ form.categorie }}
+                                {% for error in form.categorie.errors %}
+                                    <div class="invalid-feedback-custom"><i class="fas fa-info-circle me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div id="bloc-unite-mesure" class="col-md-6 field-container">
+                                <label class="form-label fw-semibold text-dark small">Unité de mesure (Ex: ml, g, unité)</label>
+                                {{ form.unite_mesure }}
+                                {% for error in form.unite_mesure.errors %}
+                                    <div class="invalid-feedback-custom"><i class="fas fa-info-circle me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="col-md-6 field-container">
+                                <label class="form-label fw-semibold text-dark small">Seuil d'alerte stock</label>
+                                {{ form.seuil_alerte }}
+                                {% for error in form.seuil_alerte.errors %}
+                                    <div class="invalid-feedback-custom"><i class="fas fa-info-circle me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                                <div class="form-text text-muted" style="font-size: 0.75rem;">Alerte BI quand le stock descend en dessous de cette valeur.</div>
+                            </div>
+
+                            <div class="col-md-6 d-flex align-items-center pt-2">
+                                <div class="form-check form-switch p-3 bg-light rounded-3 w-100 border d-flex align-items-center" style="height: 48px; border-color: var(--border-muted) !important;">
+                                    <div class="ms-2">
+                                        {{ form.est_carburant }}
+                                    </div>
+                                    <label class="form-check-label fw-semibold text-dark small ms-3 mb-0" for="id_est_carburant">Produit de type Carburant / Technique</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="section-rendement" class="mt-4">
+                            <hr class="my-5" style="color: var(--border-muted);">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="fw-bold mb-0 text-dark" style="font-size: 1.05rem;"><i class="fas fa-calculator text-muted me-2"></i>Estimation de rendement</h4>
+                                <span class="badge rounded-pill px-2.5 py-1.5" style="background: #f1f5f9; color: var(--primary-brand); font-size: 0.72rem; font-weight: 550;">Combien de prestations avec 1 unité ?</span>
+                            </div>
+
+                            {% for error in formset.non_form_errors %}
+                                <div class="alert alert-warning py-2 small mb-3 rounded-3"><i class="fas fa-exclamation-circle me-2"></i>{{ error }}</div>
+                            {% endfor %}
+
+                            <div class="table-responsive bg-light p-3 rounded-3 border" style="border-color: var(--border-muted) !important;">
+                                {{ formset.management_form }}
+                                <table class="table table-borderless align-middle mb-0 table-formset" id="formset-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50%;">Service associé</th>
+                                            <th style="width: 40%;">Nb de fois réalisable par unité</th>
+                                            <th style="width: 10%;" class="text-end">Retirer</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="formset-container">
+                                        {% for s_form in formset %}
+                                        <tr class="formset-row">
+                                            <td class="field-container">
+                                                {{ s_form.id }}
+                                                {{ s_form.service }}
+                                                {% for error in s_form.service.errors %}
+                                                    <div class="invalid-feedback-custom"><i class="fas fa-info-circle me-1"></i> {{ error }}</div>
+                                                {% endfor %}
+                                            </td>
+                                            <td class="field-container">
+                                                <div class="input-group">
+                                                    {{ s_form.rendement_par_unite }}
+                                                    <span class="input-group-text bg-white">fois</span>
+                                                </div>
+                                                {% for error in s_form.rendement_par_unite.errors %}
+                                                    <div class="invalid-feedback-custom"><i class="fas fa-info-circle me-1"></i> {{ error }}</div>
+                                                {% endfor %}
+                                            </td>
+                                            <td class="text-end">
+                                                {% if formset.can_delete %}
+                                                    <div class="d-none">{{ s_form.DELETE }}</div>
+                                                    <button type="button" class="btn btn-outline-danger btn-sm border-0 remove-form-btn p-2">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                <button type="button" id="add-form-btn" class="btn btn-sm btn-white border mt-3 text-dark fw-semibold px-3 py-2" style="border-radius: 10px; font-size: 0.78rem; background: #ffffff;">
+                                    <i class="fas fa-plus me-1.5 text-muted"></i> Ajouter une liaison service
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top" style="border-color: var(--border-muted) !important;">
+                            <div>
+                                {% if est_edition %}
+                                <button type="submit" name="action_supprimer" class="btn btn-sm btn-outline-danger px-3 py-2 fw-semibold" style="border-radius: 10px; font-size: 0.82rem;" onclick="return confirm('Supprimer définitivement cet article ?');">
+                                    <i class="fas fa-trash-alt me-1.5"></i> Supprimer l'article
+                                </button>
+                                {% endif %}
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'inventaire:liste_produits' %}" class="btn btn-sm btn-light text-secondary px-3 py-2 fw-semibold" style="border-radius: 10px; font-size: 0.85rem; background: #f1f5f9;">
+                                    Annuller
+                                </a>
+                                <button type="submit" class="btn btn-sm btn-dark px-4 py-2 fw-semibold" style="border-radius: 10px; font-size: 0.85rem; background: var(--text-main);">
+                                    <i class="fas fa-check-circle me-1.5 opacity-75"></i> {% if est_edition %}Enregistrer les modifications{% else %}Confirmer la création{% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkCarburant = document.getElementById('id_est_carburant');
+        const sectionRendement = document.getElementById('section-rendement');
+        const blocUniteMesure = document.getElementById('bloc-unite-mesure');
+        const addBtn = document.getElementById('add-form-btn');
+        const container = document.getElementById('formset-container');
+        const totalForms = document.querySelector('input[name$="-TOTAL_FORMS"]');
+        const fieldCode = document.querySelector('input[name="code"]');
+
+        // 1. PLACEHOLDER DYNAMIQUE DU CODE DE RÉFÉRENCE
+        const dernierCodeSaisi = "{{ dernier_code|default:'Aucun' }}";
+        if (fieldCode && !fieldCode.value) {
+            fieldCode.setAttribute('placeholder', `Dernier enregistré : ${dernierCodeSaisi}`);
+        }
+
+        // 2. RECHERCHE CORRIGÉE ET APPLICATION DE LA CLASSE ROUGE 'is-invalid'
+        function appliquerCouleursErreurs() {
+            document.querySelectorAll('.invalid-feedback-custom').forEach(function(errorDiv) {
+                // Recherche l'input ou select le plus proche dans la même cellule (td ou div)
+                const parentCell = errorDiv.closest('td') || errorDiv.closest('.field-container');
+                if (parentCell) {
+                    const inputField = parentCell.querySelector('input, select');
+                    if (inputField) {
+                        inputField.classList.add('is-invalid');
+                    }
+                }
+            });
+        }
+        
+        // Exécuter tout de suite pour colorer les erreurs renvoyées par Django
+        appliquerCouleursErreurs();
+
+        // 3. MASQUER / AFFICHER CONDITIONNELLEMENT SELON LE TYPE CARBURANT
+        function toggleFormLayout() {
+            if (checkCarburant) {
+                const estCarburant = checkCarburant.checked;
+                
+                if (sectionRendement) {
+                    sectionRendement.style.display = estCarburant ? 'none' : 'block';
+                }
+                if (blocUniteMesure) {
+                    blocUniteMesure.style.display = estCarburant ? 'none' : 'block';
+                }
+
+                // Si c'est un carburant, on désactive le requis pour éviter les blocages invisibles HTML5
+                document.querySelectorAll('#formset-container input, #formset-container select').forEach(input => {
+                    if (estCarburant) {
+                        input.removeAttribute('required');
+                    } else {
+                        input.setAttribute('required', 'required');
+                    }
+                });
+                
+                const inputUnite = document.querySelector('input[name="unite_mesure"]');
+                if (inputUnite) {
+                    if (estCarburant) inputUnite.removeAttribute('required');
+                    else inputUnite.setAttribute('required', 'required');
+                }
+            }
+        }
+
+        if (addBtn) {
+            addBtn.addEventListener('click', function() {
+                let formNum = parseInt(totalForms.value);
+                let allRows = container.querySelectorAll('.formset-row');
+                
+                let newRow = allRows[0].cloneNode(true);
+                
+                const prefixRegex = new RegExp('-\\d+-', 'g');
+                const prefixUnderRegex = new RegExp('_\\d+_', 'g');
+                newRow.innerHTML = newRow.innerHTML.replace(prefixRegex, `-${formNum}-`).replace(prefixUnderRegex, `_${formNum}_`);
+                
+                newRow.querySelectorAll('input, select').forEach(input => {
+                    input.classList.remove('is-invalid');
+                    if (input.type !== 'hidden') {
+                        input.value = '';
+                    } else if (input.name.endsWith('id')) {
+                        input.value = '';
+                    }
+                    if(input.type === 'checkbox') input.checked = false;
+                });
+
+                newRow.querySelectorAll('.invalid-feedback-custom').forEach(el => el.remove());
+
+                newRow.style.display = '';
+                container.appendChild(newRow);
+                totalForms.value = formNum + 1;
+                
+                // Ré-appliquer les attributs requis sur la nouvelle ligne si nécessaire
+                toggleFormLayout();
+            });
+        }
+
+        if (container) {
+            container.addEventListener('click', function(e) {
+                const deleteBtn = e.target.closest('.remove-form-btn');
+                if (deleteBtn) {
+                    const row = deleteBtn.closest('.formset-row');
+                    const deleteCheckbox = row.querySelector('input[type="checkbox"][name$="DELETE"]');
+                    
+                    if (deleteCheckbox) {
+                        deleteCheckbox.checked = true;
+                        row.style.display = 'none';
+                    } else {
+                        row.remove();
+                        totalForms.value = parseInt(totalForms.value) - 1;
+                    }
+                }
+            });
+        }
+
+        if (checkCarburant) {
+            checkCarburant.addEventListener('change', toggleFormLayout);
+            toggleFormLayout();
+        }
+    });
+</script>
+{% endblock %}

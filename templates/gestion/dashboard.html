@@ -1,0 +1,317 @@
+{% extends 'base.html' %}
+
+{% block title %}Tableau de Bord{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-tachometer-alt me-2"></i>Tableau de Bord
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Tableau de Bord</li>
+{% endblock %}
+
+
+
+
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+
+
+
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        --info-gradient: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+        --glass-bg: rgba(255, 255, 255, 0.95);
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+    }
+
+    body {
+        background-color: #f8fafc;
+        color: var(--text-main);
+        font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    /* En-tête & Boutons */
+    .btn-group {
+        background: #fff;
+        padding: 4px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .toggle-btn {
+        border-radius: 8px !important;
+        border: none !important;
+        padding: 8px 20px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    /* Cartes */
+    .card {
+        border-radius: 16px;
+        border: none;
+        box-shadow: var(--card-shadow);
+    }
+
+    .bg-primary { background: var(--primary-gradient) !important; }
+    .bg-info { background: var(--info-gradient) !important; }
+
+    h2.fw-bold {
+        font-size: 1.85rem;
+        letter-spacing: -0.03em;
+    }
+
+    .small.text-muted-custom {
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    /* Nouveaux Styles Premium pour les Modes de Paiement */
+    /* Version améliorée et compacte pour les montants des modes de paiement */
+    .payment-subcard {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 8px 4px; /* Plus compact pour laisser respirer les chiffres */
+        transition: all 0.2s ease;
+    }
+    .payment-subcard:hover {
+        background-color: #f1f5f9;
+        transform: translateY(-2px);
+    }
+
+    /* Ajustement responsive pour éviter les chevauchements sur tablettes et mobiles */
+    @media (max-width: 1200px) {
+        .payment-subcard .fw-bold {
+            font-size: 0.78rem !important; /* Réduction dynamique si l'écran rétrécit */
+        }
+    }
+
+    @media (max-width: 768px) {
+        .btn-group { width: 100%; display: flex; }
+        .toggle-btn { flex: 1; }
+    }
+</style>
+
+<!-- En-tête -->
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <h4 class="fw-bold mb-0">Tableau de bord BEL'R</h4>
+    </div>
+    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+        <div class="btn-group shadow-sm">
+            <button class="btn btn-primary toggle-btn active" data-type="week">Semaine</button>
+            <button class="btn btn-outline-primary toggle-btn" data-type="month">Mois</button>
+        </div>
+    </div>
+</div>
+
+<!-- LIGNE SUPÉRIEURE : LES KPIs PHARE (Inclusion des Modes de Paiement stylisés à droite) -->
+<div class="row g-4 mb-4">
+    <!-- CA Principal -->
+    <div class="col-md-4">
+        <div class="card p-4 bg-primary text-white h-100 justify-content-between">
+            <div>
+                <p class="small mb-1 opacity-75" id="ca-label">CA Semaine</p>
+                <h2 id="ca-value" class="fw-bold mb-0">{{ stats.chiffre_semaine|floatformat:0 }} FCFA</h2>
+            </div>
+            <div class="small mt-3">
+                <span class="badge bg-white text-primary" id="ca-growth-badge">
+                    {% if stats.ca_growth >= 0 %}▲{% else %}▼{% endif %} {{ stats.ca_growth }}%
+                </span>
+                <span class="ms-1 opacity-75">vs période passée</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ventes de Packs -->
+    <div class="col-md-4">
+        <div class="card p-4 h-100 justify-content-between">
+            <div>
+                <p class="small text-muted-custom mb-1">Ventes de Packs</p>
+                <h2 id="pack-nb-value" class="fw-bold mb-0">{{ stats.nb_packs }}</h2>
+            </div>
+            <div class="small mt-3">
+                <span id="pack-part-value" class="text-success fw-bold">{{ stats.part_packs }}%</span>
+                <span class="text-muted"> soit </span>
+                <span id="pack-ca-value" class="fw-bold text-primary">{{ stats.ca_packs|floatformat:0 }} FCFA</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Répartition des Modes de Paiement (Nouveau Format Block KPI) -->
+   <!-- Répartition des Modes de Paiement (Ajusté pour les grands montants) -->
+    <div class="col-md-4">
+        <div class="card p-4 h-100 justify-content-between">
+            <p class="small text-muted-custom mb-3">Modes de Paiement</p>
+            <!-- Utilisation de g-1 ou g-2 max pour réduire l'espace perdu entre les colonnes -->
+            <div class="row g-1.5 align-items-center">
+                <!-- Espèces -->
+                <div class="col-4">
+                    <div class="payment-subcard text-center">
+                        <span class="text-muted d-block mb-1" style="font-size: 0.7rem; font-weight: 500; letter-spacing: -0.02em;">Espèces</span>
+                        <!-- Retrait de text-truncate et ajustement à 0.82rem -->
+                        <span class="fw-bold text-dark d-block" id="pay-espece" style="font-size: 0.82rem; white-space: nowrap;">0 F</span>
+                    </div>
+                </div>
+                <!-- MoMo -->
+                <div class="col-4">
+                    <div class="payment-subcard text-center">
+                        <span class="text-muted d-block mb-1" style="font-size: 0.7rem; font-weight: 500; letter-spacing: -0.02em;">Mobile</span>
+                        <span class="fw-bold text-success d-block" id="pay-mobile" style="font-size: 0.82rem; white-space: nowrap;">0 F</span>
+                    </div>
+                </div>
+                <!-- Carte -->
+                <div class="col-4">
+                    <div class="payment-subcard text-center">
+                        <span class="text-muted d-block mb-1" style="font-size: 0.7rem; font-weight: 500; letter-spacing: -0.02em;">Carte</span>
+                        <span class="fw-bold text-info d-block" id="pay-carte" style="font-size: 0.82rem; white-space: nowrap;">0 F</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- LIGNE SECONDAIRE : GRAPHIQUE, TOP EMPLOYÉS & ACTIVITÉ DU JOUR -->
+<div class="row g-4">
+    <!-- Graphique principal -->
+    <div class="col-lg-8">
+        <div class="card p-4 h-100">
+            <h5 class="fw-bold mb-4">Évolution du Chiffre d'Affaires</h5>
+            <div style="height: 350px;">
+                <canvas id="caChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Colonne de droite imbriquée (Top 5 + Activité du jour ancrée en bas) -->
+    <div class="col-lg-4 d-flex flex-column gap-4">
+        <!-- Activité du Jour -->
+        <div class="card p-4 bg-info text-white">
+            <p class="small mb-1 opacity-75">Activité du Jour</p>
+            <h2 class="fw-bold mb-0">{{ stats.ca_today|floatformat:0 }} FCFA</h2>
+            <div class="small mt-2">
+                <span class="fw-bold">{{ stats.rdv_aujourdhui }}</span>
+                <span class="opacity-75"> prestation(s) réalisée(s)</span>
+            </div>
+        </div>
+
+        <!-- Top Employés -->
+        <div class="card p-4 flex-grow-1">
+            <h5 class="fw-bold mb-3">Top 5 Employés</h5>
+            <div id="top-employes-list"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const allStats = {{ stats_json|safe }};
+let caChart;
+const money = new Intl.NumberFormat('fr-FR');
+
+document.addEventListener("DOMContentLoaded", function() {
+    initCharts();
+    updateDashboard('week');
+
+    document.querySelectorAll(".toggle-btn").forEach(btn => {
+        btn.addEventListener("click", function() {
+            document.querySelectorAll(".toggle-btn").forEach(b => {
+                b.classList.replace("btn-primary", "btn-outline-primary");
+                b.classList.remove("active");
+            });
+            this.classList.replace("btn-outline-primary", "btn-primary");
+            this.classList.add("active");
+            updateDashboard(this.dataset.type);
+        });
+    });
+});
+
+function initCharts() {
+    const ctx = document.getElementById("caChart").getContext("2d");
+    caChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: "CA Journalier",
+                data: [],
+                backgroundColor: '#4F46E5',
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    grid: { color: '#f1f5f9' },
+                    ticks: { callback: (value) => value.toLocaleString() + ' F' }
+                },
+                x: { grid: { display: false } }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => ` CA: ${money.format(context.raw)} FCFA`
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateDashboard(period) {
+    const data = allStats[period];
+
+    // 1. Cards Principales
+    document.getElementById("ca-label").innerText = period === 'week' ? "CA Semaine" : "CA Mois";
+    document.getElementById("ca-value").innerText = money.format(data.ca_total) + " FCFA";
+    document.getElementById("pack-nb-value").innerText = data.nb_packs;
+    document.getElementById("pack-part-value").innerText = data.part_packs + "%";
+    document.getElementById("pack-ca-value").innerText = money.format(data.ca_packs) + " FCFA";
+
+    // Mise à jour dynamique du badge de croissance
+    const growthBadge = document.getElementById("ca-growth-badge");
+    if (growthBadge && typeof data.ca_growth !== 'undefined') {
+        growthBadge.innerHTML = (data.ca_growth >= 0 ? '▲ ' : '▼ ') + data.ca_growth + '%';
+    }
+
+    // 2. Chart
+    caChart.data.labels = data.labels;
+    caChart.data.datasets[0].data = data.chart_data;
+    caChart.update();
+
+    // 3. Top Employees
+    const list = document.getElementById("top-employes-list");
+    list.innerHTML = data.top_employes.map(emp => `
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+            <span class="fw-medium">${emp.employe__user__last_name || 'Anonyme'}</span>
+            <span class="fw-bold text-primary">${money.format(emp.total)} F</span>
+        </div>
+    `).join('') || '<p class="text-muted text-center py-3">Aucune donnée</p>';
+
+    // 4. Subcards Modes de Paiement (Mis à jour dynamiquement)
+    document.getElementById("pay-espece").innerText = money.format(data.pay_data.ESPECE) + " F";
+    document.getElementById("pay-mobile").innerText = money.format(data.pay_data.MOBILE_MONEY) + " F";
+    document.getElementById("pay-carte").innerText = money.format(data.pay_data.CARTE) + " F";
+}
+</script>
+{% endblock %}

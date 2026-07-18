@@ -1,0 +1,413 @@
+{% extends 'base.html' %}
+
+{% block title %}Supprimer le Service - {{ service.nom }}{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-trash-alt me-2 text-danger"></i>Supprimer le Service
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+<li class="breadcrumb-item"><a href="{% url 'services_list' %}">Services</a></li>
+<li class="breadcrumb-item"><a href="{% url 'service_edit' service.pk %}">{{ service.nom|truncatechars:20 }}</a></li>
+<li class="breadcrumb-item active">Supprimer</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="stat-card">
+            <div class="text-center mb-5">
+                <div class="delete-icon mb-4">
+                    <div class="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center" 
+                         style="width: 100px; height: 100px;">
+                        <i class="fas fa-trash-alt fa-3x text-danger"></i>
+                    </div>
+                </div>
+                
+                <h3 class="mb-3">Supprimer ce service ?</h3>
+                <p class="text-muted">
+                    Vous êtes sur le point de supprimer définitivement ce service. 
+                    Cette action est irréversible et affectera les statistiques.
+                </p>
+            </div>
+            
+            <!-- Service Details -->
+            <div class="service-details mb-5">
+                <div class="detail-card p-4 rounded" 
+                     style="background-color: {{ service.couleur|default:'#8A2BE2' }}20; 
+                            border-left: 4px solid {{ service.couleur|default:'#8A2BE2' }};">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <small class="text-muted">Nom du service</small>
+                                <div class="h4" style="color: {{ service.couleur|default:'#8A2BE2' }};">
+                                    {{ service.nom }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <small class="text-muted">Catégorie</small>
+                                <div class="h5">
+                                    {% if service.categorie %}
+                                    {{ service.categorie.nom }}
+                                    {% else %}
+                                    <span class="text-muted">Non catégorisé</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <small class="text-muted">Prix</small>
+                                <div class="h3 text-success">{{ service.prix }}€</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <small class="text-muted">Durée</small>
+                                <div class="h3">{{ service.duree }} min</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if service.description %}
+                    <div class="mb-3">
+                        <small class="text-muted">Description</small>
+                        <p class="mb-0">{{ service.description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Impact Analysis -->
+            <div class="impact-analysis mb-5">
+                <h6 class="mb-3">
+                    <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                    Impact de la suppression
+                </h6>
+                
+                <div class="impact-list">
+                    <div class="impact-item d-flex align-items-center mb-3">
+                        <div class="impact-icon me-3">
+                            <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px;">
+                                <i class="fas fa-calendar-times text-warning"></i>
+                            </div>
+                        </div>
+                        <div class="impact-content">
+                            <strong>Rendez-vous affectés</strong>
+                            <div class="small text-muted">
+                                {{ service_usage.count }} rendez-vous utilisent ce service
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="impact-item d-flex align-items-center mb-3">
+                        <div class="impact-icon me-3">
+                            <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px;">
+                                <i class="fas fa-chart-line text-danger"></i>
+                            </div>
+                        </div>
+                        <div class="impact-content">
+                            <strong>Statistiques impactées</strong>
+                            <div class="small text-muted">
+                                Les performances des coiffeurs seront affectées
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="impact-item d-flex align-items-center">
+                        <div class="impact-icon me-3">
+                            <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px;">
+                                <i class="fas fa-history text-info"></i>
+                            </div>
+                        </div>
+                        <div class="impact-content">
+                            <strong>Historique préservé</strong>
+                            <div class="small text-muted">
+                                L'historique des rendez-vous passés sera conservé
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if service_usage.count > 0 %}
+                <div class="alert alert-warning mt-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                        <div>
+                            <strong>Attention !</strong>
+                            <div class="mt-1">
+                                Ce service est utilisé dans {{ service_usage.count }} rendez-vous.
+                                Considérez plutôt le <strong>désactiver</strong> en le rendant indisponible.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alternative-suggestion mt-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="disableInstead" checked>
+                        <label class="form-check-label" for="disableInstead">
+                            Désactiver le service au lieu de le supprimer
+                        </label>
+                    </div>
+                    <div class="form-text">
+                        Le service sera marqué comme "inactif" mais restera dans l'historique
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Actions -->
+            <div class="d-flex justify-content-between pt-4 border-top">
+                <a href="{% url 'service_edit' service.pk %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Retour
+                </a>
+                
+                <div class="btn-group">
+                    {% if service_usage.count > 0 %}
+                    <button type="button" class="btn btn-warning" onclick="disableService()" id="disableBtn">
+                        <i class="fas fa-ban me-1"></i> Désactiver
+                    </button>
+                    {% endif %}
+                    
+                    <form method="post" class="d-inline" id="deleteForm">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger" id="deleteBtn">
+                            <i class="fas fa-trash-alt me-1"></i> Supprimer définitivement
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Confirmation -->
+            <div class="alert alert-danger mt-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-skull-crossbones fa-2x me-3"></i>
+                    <div>
+                        <strong>Action irréversible</strong>
+                        <div class="mt-1">
+                            Cette action ne peut pas être annulée. Le service sera définitivement supprimé.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Alternative Services -->
+        {% if similar_services %}
+        <div class="stat-card mt-4">
+            <h6 class="mb-3">
+                <i class="fas fa-exchange-alt me-2 text-success"></i>
+                Services similaires (alternative)
+            </h6>
+            
+            <div class="similar-services">
+                {% for similar in similar_services %}
+                <div class="service-alternative p-3 rounded mb-2" 
+                     style="background-color: rgba(0, 212, 170, 0.05);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-bold" style="color: {{ similar.couleur|default:'#8A2BE2' }};">
+                                {{ similar.nom }}
+                            </div>
+                            <div class="small text-muted">
+                                {{ similar.duree }} min • {{ similar.prix }}€
+                            </div>
+                        </div>
+                        <div>
+                            <a href="{% url 'service_edit' similar.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button class="btn btn-sm btn-outline-success" 
+                                    onclick="replaceService({{ service.pk }}, {{ similar.pk }})">
+                                <i class="fas fa-sync-alt"></i> Remplacer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .delete-icon {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+    
+    .detail-card {
+        border: 1px solid rgba(138, 43, 226, 0.2);
+    }
+    
+    .impact-item {
+        padding: 0.75rem;
+        background-color: rgba(0, 0, 0, 0.02);
+        border-radius: 8px;
+    }
+    
+    .impact-icon {
+        flex-shrink: 0;
+    }
+    
+    .alternative-suggestion {
+        padding: 1rem;
+        background-color: rgba(255, 193, 7, 0.05);
+        border-radius: 8px;
+        border-left: 4px solid #ffc107;
+    }
+    
+    .service-alternative {
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+    }
+    
+    .service-alternative:hover {
+        border-color: var(--primary-color);
+        transform: translateX(5px);
+    }
+    
+    .similar-services {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+</style>
+
+{% block extra_js %}
+<script>
+    // Toggle between delete and disable
+    const disableCheckbox = document.getElementById('disableInstead');
+    const disableBtn = document.getElementById('disableBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
+    
+    disableCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            deleteBtn.style.display = 'none';
+            disableBtn.style.display = 'inline-block';
+        } else {
+            deleteBtn.style.display = 'inline-block';
+            disableBtn.style.display = 'none';
+        }
+    });
+    
+    // Disable service instead of deleting
+    function disableService() {
+        if (confirm('Désactiver ce service ? Il sera marqué comme inactif mais restera dans l\'historique.')) {
+            fetch(`/api/services/{{ service.pk }}/disable/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = "{% url 'services_list' %}";
+                }
+            });
+        }
+    }
+    
+    // Replace service with alternative
+    function replaceService(oldServiceId, newServiceId) {
+        if (confirm('Remplacer ce service par l\'alternative ? Tous les rendez-vous futurs seront mis à jour.')) {
+            fetch(`/api/services/replace/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    old_service_id: oldServiceId,
+                    new_service_id: newServiceId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Service remplacé avec succès ! Vous pouvez maintenant supprimer l\'ancien.');
+                    window.location.reload();
+                }
+            });
+        }
+    }
+    
+    // Enhanced delete confirmation
+    document.getElementById('deleteForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const serviceName = "{{ service.nom }}";
+        const usageCount = {{ service_usage.count }};
+        
+        if (usageCount > 0) {
+            const message = `ATTENTION !\n\n` +
+                          `Le service "${serviceName}" est utilisé dans ${usageCount} rendez-vous.\n\n` +
+                          `La suppression pourrait :\n` +
+                          `• Affecter les statistiques\n` +
+                          `• Rendre l'historique incomplet\n` +
+                          `• Provoquer des erreurs dans les rapports\n\n` +
+                          `Êtes-vous ABSOLUMENT SÛR de vouloir continuer ?\n\n` +
+                          `Tapez "SUPPRIMER" pour confirmer.`;
+            
+            const confirmation = prompt(message);
+            
+            if (confirmation === 'SUPPRIMER') {
+                this.submit();
+            } else {
+                alert('Suppression annulée. Considérez plutôt de désactiver le service.');
+            }
+        } else {
+            if (confirm(`Supprimer définitivement "${serviceName}" ?`)) {
+                this.submit();
+            }
+        }
+    });
+    
+    function getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    }
+    
+    // Auto-focus on checkbox for better UX
+    document.getElementById('disableInstead').focus();
+    
+    // Show warning if trying to leave page
+    let formChanged = false;
+    
+    window.addEventListener('beforeunload', function(e) {
+        if (!formChanged) return;
+        
+        e.preventDefault();
+        e.returnValue = 'Vous avez des modifications non sauvegardées. Êtes-vous sûr de vouloir quitter ?';
+        return e.returnValue;
+    });
+    
+    // Mark form as changed
+    document.querySelectorAll('input, select, textarea').forEach(element => {
+        element.addEventListener('change', () => formChanged = true);
+    });
+</script>
+{% endblock %}
+{% endblock %}

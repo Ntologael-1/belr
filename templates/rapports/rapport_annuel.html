@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+{% load humanize %} <!-- Pense à ajouter 'django.contrib.humanize' dans tes INSTALLED_APPS pour le formatage des prix -->
+
+{% block title %}Rapport Annuel & Effet Ciseau - BEL'R{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="background-color: #f8f9fa; min-height: 100vh;">
+    
+    <!-- En-tête de la page -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold text-dark mb-1">Analyse Annuelle & Performance</h1>
+            <p class="text-muted mb-0">Comparatif financier dynamique entre l'année {{ annee_en_cours }} et {{ annee_precedente }}</p>
+        </div>
+        <div class="btn-group shadow-sm">
+            <button class="btn btn-white bg-white border" onclick="window.print();">
+                <i class="fas fa-print me-2"></i>Exporter en PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- 1. Section des Blocs KPIs Globaux -->
+    <div class="row g-3 mb-4">
+        <!-- Chiffre d'Affaires Cumulé -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-4" style="border-left: 5px solid #FF6B8B !important; border-radius: 12px;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-uppercase text-muted fw-semibold small tracking-wider">CA Cumulé ({{ annee_en_cours }})</span>
+                        <h2 class="fw-bold text-dark my-2">{{ total_ca_n|intcomma }} FCFA</h2>
+                        <span class="badge {% if evolution_ca_annuel_pct >= 0 %}bg-light-success text-success{% else %}bg-light-danger text-danger{% endif %} px-2.5 py-1.5 fw-semibold">
+                            <i class="fas {% if evolution_ca_annuel_pct >= 0 %}fa-arrow-up{% else %}fa-arrow-down{% endif %} me-1"></i>
+                            {{ evolution_ca_annuel_pct }}% vs {{ annee_precedente }}
+                        </span>
+                    </div>
+                    <div class="bg-light p-3" style="border-radius: 10px; color: #FF6B8B;">
+                        <i class="fas fa-wallet fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coûts Généraux Cumulés -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-4" style="border-left: 5px solid #D42A5B !important; border-radius: 12px;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-uppercase text-muted fw-semibold small tracking-wider">Coûts Généraux ({{ annee_en_cours }})</span>
+                        <h2 class="fw-bold text-dark my-2">{{ total_couts_n|intcomma }} FCFA</h2>
+                        <span class="badge {% if evolution_couts_annuel_pct <= 0 %}bg-light-success text-success{% else %}bg-light-danger text-danger{% endif %} px-2.5 py-1.5 fw-semibold">
+                            <i class="fas {% if evolution_couts_annuel_pct <= 0 %}fa-arrow-down{% else %}fa-arrow-up{% endif %} me-1"></i>
+                            {{ evolution_couts_annuel_pct }}% vs {{ annee_precedente }}
+                        </span>
+                    </div>
+                    <div class="bg-light p-3" style="border-radius: 10px; color: #D42A5B;">
+                        <i class="fas fa-calculator fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Effet Ciseau Global -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-4" style="border-left: 5px solid {% if effet_ciseau_global >= 0 %}#2ecc71{% else %}#e74c3c{% endif %} !important; border-radius: 12px;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-uppercase text-muted fw-semibold small tracking-wider">Effet Ciseau Global</span>
+                        <h2 class="fw-bold text-dark my-2">{% if effet_ciseau_global > 0 %}+{% endif %}{{ effet_ciseau_global }}%</h2>
+                        {% if effet_ciseau_global > 0 %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                <i class="fas fa-scissors me-1"></i> Zone Favorable (Croissance saine)
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                                <i class="fas fa-exclamation-triangle me-1"></i> Alerte Ciseau (Charges trop hautes)
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="p-3 {% if effet_ciseau_global >= 0 %}bg-success-subtle text-success{% else %}bg-danger-subtle text-danger{% endif %}" style="border-radius: 10px;">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Section Graphique Évolution CA (Les 2 dernières années) -->
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+        <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+            <h5 class="fw-bold text-dark mb-1"><i class="fas fa-chart-area me-2 text-muted"></i>Trajectoire du Chiffre d'Affaires</h5>
+            <p class="text-muted small mb-0">Comparatif direct mois par mois des deux derniers exercices</p>
+        </div>
+        <div class="card-body px-4 pb-4">
+            <div style="position: relative; height: 320px;">
+                <canvas id="caEvolutionChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Grand Tableau Comparatif Mensuel -->
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+        <div class="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold text-dark mb-0"><i class="fas fa-table me-2 text-muted"></i>Matrice Analytique Mensuelle</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 text-center">
+                <thead class="table-light text-uppercase font-monospace small" style="letter-spacing: 0.5px;">
+                    <tr>
+                        <th class="text-start ps-4">Mois</th>
+                        <th>CA {{ annee_precedente }}</th>
+                        <th>CA {{ annee_en_cours }}</th>
+                        <th>Évol. CA (%)</th>
+                        <th>Coûts {{ annee_precedente }}</th>
+                        <th>Coûts {{ annee_en_cours }}</th>
+                        <th>Évol. Coûts (%)</th>
+                        <th class="pe-4">Effet Ciseau</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ligne in tableau_comparatif %}
+                    <tr>
+                        <td class="text-start fw-bold text-dark ps-4">{{ ligne.nom_mois }}</td>
+                        <td class="text-muted">{{ ligne.ca_n_1|intcomma }}</td>
+                        <td class="fw-semibold text-dark">{{ ligne.ca_n|intcomma }}</td>
+                        <td>
+                            <span class="fw-bold {% if ligne.evo_ca_pct >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                {% if ligne.evo_ca_pct > 0 %}+{% endif %}{{ ligne.evo_ca_pct }}%
+                            </span>
+                        </td>
+                        <td class="text-muted">{{ ligne.couts_n_1|intcomma }}</td>
+                        <td class="text-dark">{{ ligne.couts_n|intcomma }}</td>
+                        <td>
+                            <span class="{% if ligne.evo_couts_pct <= 0 %}text-success{% else %}text-danger{% endif %}">
+                                {% if ligne.evo_couts_pct > 0 %}+{% endif %}{{ ligne.evo_couts_pct }}%
+                            </span>
+                        </td>
+                        <td class="pe-4">
+                            {% if ligne.effet_ciseau > 0 %}
+                                <span class="badge bg-success-subtle text-success rounded-pill fw-bold px-3 py-1.5" style="font-size: 0.85rem;">
+                                    <i class="fas fa-arrow-trend-up me-1"></i> Favorable (+{{ ligne.effet_ciseau }}%)
+                                </span>
+                            {% elif ligne.effet_ciseau < 0 %}
+                                <span class="badge bg-danger-subtle text-danger rounded-pill fw-bold px-3 py-1.5" style="font-size: 0.85rem;">
+                                    <i class="fas fa-arrow-trend-down me-1"></i> Divergent ({{ ligne.effet_ciseau }}%)
+                                </span>
+                            {% else %}
+                                <span class="badge bg-light text-muted rounded-pill px-3 py-1.5" style="font-size: 0.85rem;">
+                                    Stable (0.00%)
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Styles CSS personnalisés pour l'effet Premium (Sous-badges clairs) -->
+<style>
+    .bg-light-success { background-color: rgba(46, 204, 113, 0.15); color: #2ecc71; }
+    .bg-light-danger { background-color: rgba(231, 76, 60, 0.15); color: #e74c3c; }
+    .bg-success-subtle { background-color: #e8f8f0 !important; color: #1e7e34 !important; }
+    .bg-danger-subtle { background-color: #fdeaea !important; color: #bd2130 !important; }
+    .table th { font-weight: 600; font-size: 0.8rem; color: #6c757d; }
+    .table td { padding: 1rem 0.5rem; font-size: 0.95rem; }
+    @media print {
+        .btn-group, .navbar, .sidebar { display: none !important; }
+        .container-fluid { background: white !important; padding: 0 !important; }
+    }
+</style>
+
+<!-- 4. Script d'injection des données Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctx = document.getElementById('caEvolutionChart').getContext('2d');
+        
+        // Parsing sécurisé des tableaux JSON passés par la vue Django
+        const labelsMois = {{ labels_mois_json|safe }};
+        const dataAnneeEnCours = {{ ca_chart_annee_en_cours_json|safe }};
+        const dataAnneePrecedente = {{ ca_chart_annee_precedente_json|safe }};
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labelsMois,
+                datasets: [
+                    {
+                        label: "Chiffre d'Affaires {{ annee_en_cours }} (N)",
+                        data: dataAnneeEnCours,
+                        borderColor: '#2ecc71',                  //  Vert émeraude pour l'année en cours
+                        backgroundColor: 'rgba(46, 204, 113, 0.06)', // Léger reflet vert en arrière-plan
+                        borderWidth: 3,
+                        pointBackgroundColor: '#2ecc71',
+                        pointHoverRadius: 7,
+                        fill: true,
+                        tension: 0.35
+                    },
+                    {
+                        label: "Chiffre d'Affaires {{ annee_precedente }} (N-1)",
+                        data: dataAnneePrecedente,
+                        borderColor: '#FF6B8B',                  //  Rose/Corail pour l'année précédente
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#FF6B8B',
+                        pointHoverRadius: 5,
+                        fill: false,
+                        tension: 0.35
+                        // Reste en ligne pleine continue comme demandé précédemment
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { boxWidth: 15, font: { weight: '600' }, color: '#495057' }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#6c757d' } },
+                    y: { 
+                        grid: { color: 'rgba(0, 0, 0, 0.04)' },
+                        ticks: {
+                            color: '#6c757d',
+                            callback: function(value) {
+                                return value.toLocaleString() + ' FCFA';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

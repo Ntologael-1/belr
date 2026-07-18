@@ -1,0 +1,243 @@
+{% if notifications %}
+<div class="notifications-dropdown dropdown">
+    <button class="btn btn-light dropdown-toggle" type="button" 
+            data-bs-toggle="dropdown" id="notificationsDropdown">
+        <i class="fas fa-bell"></i>
+        <span class="badge bg-danger">{{ notifications|length }}</span>
+    </button>
+    
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown">
+        <li class="dropdown-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <span>Notifications</span>
+                <a href="#" class="small text-primary">Marquer tout comme lu</a>
+            </div>
+        </li>
+        
+        <div class="notifications-list" style="max-height: 400px; overflow-y: auto;">
+            {% for notification in notifications %}
+            <li>
+                <a class="dropdown-item notification-item {% if not notification.read %}unread{% endif %}" 
+                   href="{{ notification.link }}">
+                    <div class="d-flex">
+                        <div class="notification-icon me-3">
+                            {% if notification.type == 'rdv' %}
+                            <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px;">
+                                <i class="fas fa-calendar-alt text-primary"></i>
+                            </div>
+                            {% elif notification.type == 'client' %}
+                            <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px;">
+                                <i class="fas fa-user text-success"></i>
+                            </div>
+                            {% elif notification.type == 'stock' %}
+                            <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px;">
+                                <i class="fas fa-box text-warning"></i>
+                            </div>
+                            {% elif notification.type == 'payment' %}
+                            <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px;">
+                                <i class="fas fa-euro-sign text-info"></i>
+                            </div>
+                            {% else %}
+                            <div class="rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px;">
+                                <i class="fas fa-info-circle text-secondary"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="notification-content flex-grow-1">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ notification.title }}</strong>
+                                <small class="text-muted">{{ notification.time }}</small>
+                            </div>
+                            <p class="mb-0 text-muted small">{{ notification.message }}</p>
+                        </div>
+                        
+                        {% if not notification.read %}
+                        <div class="notification-indicator ms-2">
+                            <span class="badge bg-primary rounded-circle p-1"></span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </a>
+            </li>
+            {% if not forloop.last %}
+            <li><hr class="dropdown-divider"></li>
+            {% endif %}
+            {% endfor %}
+        </div>
+        
+        <li class="dropdown-footer text-center p-2">
+            <a href="{% url 'notifications_list' %}" class="text-primary small">
+                <i class="fas fa-list me-1"></i> Voir toutes les notifications
+            </a>
+        </li>
+    </ul>
+</div>
+
+<!-- Real-time notification -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
+    <div id="liveNotification" class="toast toast-saloon" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-2" 
+                 style="width: 24px; height: 24px;">
+                <i class="fas fa-bell text-primary small"></i>
+            </div>
+            <strong class="me-auto">Nouvelle notification</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="notificationBody">
+            Chargement...
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+    .notifications-dropdown .dropdown-menu {
+        width: 350px;
+        max-width: 90vw;
+    }
+    
+    .notification-item {
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .notification-item:hover {
+        background-color: rgba(138, 43, 226, 0.05);
+    }
+    
+    .notification-item.unread {
+        background-color: rgba(138, 43, 226, 0.1);
+    }
+    
+    .notification-item.unread:hover {
+        background-color: rgba(138, 43, 226, 0.15);
+    }
+    
+    .notification-icon {
+        flex-shrink: 0;
+    }
+    
+    .notification-content {
+        min-width: 0; /* Pour le text-overflow */
+    }
+    
+    .notification-content p {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+    
+    .notification-indicator {
+        align-self: center;
+    }
+    
+    .toast-saloon {
+        background: white;
+        border-left: 4px solid var(--primary-color);
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dropdown-footer {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+    
+    @media (max-width: 576px) {
+        .notifications-dropdown .dropdown-menu {
+            width: 90vw;
+            right: 0;
+            left: auto;
+        }
+    }
+</style>
+
+<script>
+    // Mark notification as read
+    document.querySelectorAll('.notification-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            if (this.classList.contains('unread')) {
+                const notificationId = this.getAttribute('data-id');
+                if (notificationId) {
+                    fetch(`/api/notifications/${notificationId}/mark-read/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCsrfToken()
+                        }
+                    });
+                }
+            }
+        });
+    });
+    
+    // Real-time notifications via WebSocket or polling
+    function checkNewNotifications() {
+        fetch('/api/notifications/latest/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.new_notifications > 0) {
+                    showLiveNotification(data.latest_notification);
+                    updateNotificationBadge(data.new_notifications);
+                }
+            });
+    }
+    
+    function showLiveNotification(notification) {
+        const toast = document.getElementById('liveNotification');
+        const body = document.getElementById('notificationBody');
+        
+        body.innerHTML = `
+            <div class="d-flex">
+                <div class="me-3">
+                    ${getNotificationIcon(notification.type)}
+                </div>
+                <div>
+                    <strong>${notification.title}</strong>
+                    <div class="small text-muted">${notification.message}</div>
+                </div>
+            </div>
+        `;
+        
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+    }
+    
+    function getNotificationIcon(type) {
+        const icons = {
+            'rdv': 'fas fa-calendar-alt text-primary',
+            'client': 'fas fa-user text-success',
+            'stock': 'fas fa-box text-warning',
+            'payment': 'fas fa-euro-sign text-info',
+            'default': 'fas fa-info-circle text-secondary'
+        };
+        
+        const iconClass = icons[type] || icons['default'];
+        return `<i class="${iconClass} fa-lg"></i>`;
+    }
+    
+    function updateNotificationBadge(count) {
+        const badge = document.querySelector('#notificationsDropdown .badge');
+        if (badge) {
+            const currentCount = parseInt(badge.textContent) || 0;
+            badge.textContent = currentCount + count;
+        }
+    }
+    
+    function getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    }
+    
+    // Check for new notifications every 30 seconds
+    setInterval(checkNewNotifications, 30000);
+    
+    // Initial check
+    checkNewNotifications();
+</script>

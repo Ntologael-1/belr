@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block page_title %}Mouvement de stock{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'liste_produits' %}">Inventaire</a></li>
+<li class="breadcrumb-item active">Mouvement</li>
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            
+            {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show rounded-3 shadow-sm" role="alert">
+                    <i class="fas {% if message.tags == 'error' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+              
+                <div class="p-4 text-center {% if is_edit %}bg-warning-subtle text-warning-emphasis{% else %}bg-primary text-white{% endif %}">
+                    <div class="bg-white bg-opacity-25 p-3 rounded-circle d-inline-block mb-3">
+                        <i class="fas {% if is_edit %}fa-edit{% else %}fa-exchange-alt{% endif %} fa-2x"></i>
+                    </div>
+                    <h3 class="fw-bold mb-0">
+                        {% if is_edit %}Modifier le Mouvement{% else %}Nouveau Mouvement{% endif %}
+                    </h3>
+                    <p class="mb-0 opacity-75">{{ produit.nom }}</p>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                   
+                    <form method="post" id="mouvementForm" action="{% if is_edit %}{% url 'inventaire:modifier_mouvement' mouvement.id %}{% else %}{% url 'inventaire:ajouter_mouvement' produit.id %}{% endif %}">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark">Type de mouvement <span class="text-danger">*</span></label>
+                            <select name="type_mouvement" class="form-select form-select-lg rounded-3 border-2" id="typeMv" required>
+                                {% if not is_edit %}
+                                    <option value="" selected disabled>-- Choisir le mouvement --</option>
+                                {% endif %}
+                                <option value="ENTREE" {% if mouvement.type_mouvement == 'ENTREE' %}selected{% endif %}>
+                                    📦 Entrée / Achat de stock
+                                </option>
+                                <option value="SORTIE" {% if mouvement.type_mouvement == 'SORTIE' %}selected{% endif %}>
+                                    ✂️ Sortie (Déclaration Stock Restant)
+                                </option>
+                                <option value="AJUSTEMENT" {% if mouvement.type_mouvement == 'AJUSTEMENT' %}selected{% endif %}>
+                                    ⚙️ Ajustement d'inventaire
+                                </option>
+                            </select>
+                            <div class="form-text" id="typeMvHelp">Sélectionnez un type de mouvement pour configurer le formulaire.</div>
+                        </div>
+
+                        <div class="row mb-4">
+                           
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-dark" id="labelQuantite">Quantité <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="number" step="any" min="0.01" name="quantite" 
+                                           id="inputQuantite"
+                                           value="{% if mouvement.quantite %}{{ mouvement.quantite|stringformat:'.2f' }}{% endif %}" 
+                                           class="form-control form-control-lg rounded-3 border-2" 
+                                           placeholder="---" required>
+                                    <span class="input-group-text bg-light text-muted small">{{ produit.unite_mesure }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6" id="prixAchatContainer">
+                                <label class="form-label fw-bold text-dark">Prix Unitaire HT</label>
+                                <div class="input-group">
+                                    <input type="number" step="any" min="0" name="prix_achat_unitaire" 
+                                           id="inputPrix"
+                                           value="{% if mouvement.prix_achat_unitaire %}{{ mouvement.prix_achat_unitaire|stringformat:'.2f' }}{% endif %}" 
+                                           class="form-control form-control-lg rounded-3 border-2" 
+                                           placeholder="FCFA">
+                                    <span class="input-group-text bg-light">CFA</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark">Note interne (optionnel)</label>
+                            <textarea name="notes" class="form-control rounded-3 border-2" rows="2" 
+                                      placeholder="Ex: Référence facture, Inventaire mensuel..."></textarea>
+                        </div>
+
+                        <div class="d-grid gap-3 pt-3">
+                            <button type="submit" class="btn {% if is_edit %}btn-warning{% else %}btn-primary{% endif %} btn-lg rounded-pill fw-bold shadow-sm">
+                                <i class="fas fa-save me-2"></i>
+                                {% if is_edit %}Enregistrer les modifications{% else %}Confirmer et Enregistrer{% endif %}
+                            </button>
+
+                            {% if is_edit %}
+                            <button type="submit" name="delete_mouvement" class="btn btn-outline-danger border-0 btn-sm" 
+                                    onclick="return confirm('⚠️ ATTENTION : Supprimer ce mouvement annulera son effet sur l\'historique et le stock réel. Continuer ?')">
+                                <i class="fas fa-trash-alt me-2"></i>Supprimer définitivement ce mouvement
+                            </button>
+                            {% endif %}
+
+                            <hr class="my-2">
+
+                            <a href="{% url 'inventaire:liste_produits' %}" class="btn btn-link text-muted text-decoration-none">
+                                <i class="fas fa-arrow-left me-1"></i> Annuler et retourner au produit
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const typeMvSelect = document.getElementById('typeMv');
+    const containerPrix = document.getElementById('prixAchatContainer');
+    const labelQuantite = document.getElementById('labelQuantite');
+    const inputQuantite = document.getElementById('inputQuantite');
+    const inputPrix = document.getElementById('inputPrix');
+    const typeMvHelp = document.getElementById('typeMvHelp');
+
+    function ajusterFormulaire() {
+        const choix = typeMvSelect.value;
+
+        // Si aucun choix n'est fait (option d'invite par défaut)
+        if (!choix) {
+            labelQuantite.innerHTML = 'Quantité <span class="text-danger">*</span>';
+            inputQuantite.setAttribute('placeholder', '---');
+            typeMvHelp.innerText = "Veuillez sélectionner un type de mouvement pour configurer les calculs.";
+            return;
+        }
+
+        if (choix === 'SORTIE') {
+            labelQuantite.innerHTML = '<i class="fas fa-boxes me-1 text-danger"></i> Stock restant en rayon <span class="text-danger">*</span>';
+            inputQuantite.setAttribute('placeholder', 'Reste physique constaté');
+            typeMvHelp.innerText = "Saisissez la quantité exacte restée en rayon. L'outil calculera ce qui a été consommé.";
+            
+            // Griser et désactiver le prix
+            containerPrix.classList.add('opacity-25');
+            containerPrix.style.pointerEvents = 'none';
+            inputPrix.disabled = true;
+            inputPrix.value = '';
+        } 
+        else if (choix === 'ENTREE') {
+            labelQuantite.innerHTML = '<i class="fas fa-plus-circle me-1 text-success"></i> Quantité reçue <span class="text-danger">*</span>';
+            inputQuantite.setAttribute('placeholder', 'Quantité achetée');
+            typeMvHelp.innerText = "Ajoute ces nouvelles unités au stock existant et met à jour le PAMP.";
+            
+            // Activer le prix
+            containerPrix.classList.remove('opacity-25');
+            containerPrix.style.pointerEvents = 'auto';
+            inputPrix.disabled = false;
+        } 
+        else if (choix === 'AJUSTEMENT') {
+            labelQuantite.innerHTML = '<i class="fas fa-tools me-1 text-secondary"></i> Quantité d\'ajustement <span class="text-danger">*</span>';
+            inputQuantite.setAttribute('placeholder', 'Quantité cible réelle');
+            typeMvHelp.innerText = "Correction manuelle et forcée des données de l'inventaire.";
+            
+            // Griser et désactiver le prix
+            containerPrix.classList.add('opacity-25');
+            containerPrix.style.pointerEvents = 'none';
+            inputPrix.disabled = true;
+            inputPrix.value = '';
+        }
+    }
+
+    typeMvSelect.addEventListener('change', ajusterFormulaire);
+    window.addEventListener('DOMContentLoaded', ajusterFormulaire);
+</script>
+
+<style>
+    .form-control:focus, .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+    }
+    .card { border-radius: 1.5rem !important; }
+    .bg-warning-subtle { background-color: #fff3cd !important; }
+    .text-warning-emphasis { color: #664d03 !important; }
+</style>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

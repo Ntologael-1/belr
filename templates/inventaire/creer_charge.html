@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+<!--
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-lg rounded-4">
+                <div class="card-body p-4">
+                    <h3 class="fw-bold text-primary mb-4">Nouvelle Charge Fixe</h3>
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill">Enregistrer la charge</button>
+                            <a href="{% url 'inventaire:liste_charges' %}" class="btn btn-light rounded-pill">Annuler</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+-->
+
+
+
+
+
+
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-lg rounded-4">
+                <div class="card-body p-4">
+                    <!-- Titre Dynamique -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="fw-bold {% if edit_mode %}text-warning{% else %}text-primary{% endif %} mb-0">
+                            {% if edit_mode %}Modifier la Charge{% else %}Nouvelle Charge Fixe{% endif %}
+                        </h3>
+                        
+                        {% if edit_mode %}
+                        <!-- Bouton de suppression (visible uniquement en modification) -->
+                        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="fas fa-trash me-1"></i> Supprimer
+                        </button>
+                        {% endif %}
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Rendu propre des champs du formulaire -->
+                        <div class="charge-form-fields">
+                            {{ form.as_p }}
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn {% if edit_mode %}btn-warning text-dark{% else %}btn-primary{% endif %} btn-lg rounded-pill shadow-sm">
+                                <i class="fas fa-save me-2"></i>
+                                {% if edit_mode %}Mettre à jour la charge{% else %}Enregistrer la charge{% endif %}
+                            </button>
+                            <a href="{% url 'inventaire:liste_charges' %}" class="btn btn-light rounded-pill border">
+                                Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if edit_mode %}
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="fas fa-exclamation-triangle text-danger fa-3x mb-3"></i>
+                <p>Êtes-vous sûr de vouloir supprimer la charge <strong>"{{ charge.libelle }}"</strong> ?<br>
+                <small class="text-muted">Cette action supprimera également l'historique des paiements associés.</small></p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Annuler</button>
+                <form action="{% url 'inventaire:supprimer_charge' charge.pk %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger rounded-pill px-4">Supprimer définitivement</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+    /* Amélioration de l'apparence des champs Django as_p */
+    .charge-form-fields p {
+        margin-bottom: 1.2rem;
+    }
+    .charge-form-fields label {
+        display: block;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.4rem;
+    }
+    .charge-form-fields input, .charge-form-fields select, .charge-form-fields textarea {
+        width: 100%;
+        padding: 0.6rem 0.8rem;
+        border: 1px solid #ced4da;
+        border-radius: 10px;
+        transition: border-color 0.2s;
+    }
+    .charge-form-fields input:focus {
+        border-color: #0d6efd;
+        outline: none;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+    }
+</style>
+{% endblock %}

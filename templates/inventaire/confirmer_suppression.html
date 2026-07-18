@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="card border-0 shadow-sm p-5 rounded-4 mx-auto" style="max-width: 500px;">
+        <h2 class="text-danger fw-bold mb-4">Attention !</h2>
+        <p class="mb-4">Voulez-vous vraiment supprimer : <br><strong>{{ objet }}</strong> ?</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-lg rounded-pill px-5 me-2">Confirmer</button>
+            <a href="{% url 'inventaire:liste_charges' %}" class="btn btn-light btn-lg rounded-pill px-5">Annuler</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

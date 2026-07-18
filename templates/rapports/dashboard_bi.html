@@ -1,0 +1,589 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    :root {
+        --primary: #4f46e5;
+        --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        --surface-card: #ffffff;
+        --background-app: #f8fafc;
+        --border-premium: rgba(226, 232, 240, 0.7);
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        
+        --color-benefice: #10b981;
+        --color-benefice-soft: rgba(16, 185, 129, 0.08);
+        --color-cout-reel: #f43f5e;
+        --color-cout-reel-soft: rgba(244, 63, 94, 0.08);
+        --color-cout-theo: #3b82f6;
+        --color-cout-theo-soft: rgba(59, 130, 246, 0.08);
+        --color-perte: #f59e0b;
+        --color-perte-soft: #fffbeb;
+    }
+
+    body { 
+        background: var(--background-app); 
+        color: var(--text-main); 
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        -webkit-font-smoothing: antialiased;
+    }
+    
+    .nav-tabs-premium {
+        border-bottom: 1px solid var(--border-premium);
+        gap: 0.5rem;
+    }
+    .nav-tabs-premium .nav-link {
+        border: none;
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.9rem;
+        padding: 0.75rem 1.25rem;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+    }
+    .nav-tabs-premium .nav-link:hover {
+        background: rgba(15, 23, 42, 0.03);
+        color: var(--text-main);
+    }
+    .nav-tabs-premium .nav-link.active {
+        background: #ffffff;
+        color: var(--primary);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08);
+        border: 1px solid var(--border-premium);
+    }
+
+    .bi-card {
+        background: var(--surface-card);
+        border: 1px solid var(--border-premium);
+        border-radius: 24px;
+        box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.02), 0 2px 4px -2px rgba(15, 23, 42, 0.02);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    .bi-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.05), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
+    }
+    
+    .kpi-indicator {
+        font-size: 2.1rem;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        line-height: 1.1;
+    }
+
+    .premium-badge-bi {
+        background: rgba(79, 70, 229, 0.06);
+        color: var(--primary);
+        font-weight: 700;
+        border: 1px solid rgba(79, 70, 229, 0.15);
+        border-radius: 12px;
+        padding: 0.6rem 1.2rem;
+        font-size: 0.85rem;
+        letter-spacing: 0.02em;
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .icon-shape-soft {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    .progress-premium {
+        height: 8px; 
+        background-color: #f1f5f9; 
+        border-radius: 99px;
+        overflow: hidden;
+    }
+    .progress-premium .progress-bar {
+        border-radius: 99px;
+        background-image: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
+    }
+    .progress-premium .progress-bar-danger {
+        background-image: linear-gradient(90deg, #f43f5e 0%, #ff788e 100%);
+    }
+
+    .text-title-premium {
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: var(--text-main);
+    }
+    .text-caps-muted {
+        font-size: 0.7rem; 
+        letter-spacing: 0.08em;
+        font-weight: 700;
+        color: var(--text-muted);
+    }
+
+    .blur-glow-bg {
+        position: absolute;
+        width: 150px;
+        height: 150px;
+        background: var(--primary-gradient);
+        filter: blur(90px);
+        opacity: 0.08;
+        top: -50px;
+        right: -50px;
+        border-radius: 50%;
+    }
+
+    .top-product-item {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+        border-radius: 14px;
+        padding: 0.5rem;
+    }
+    .top-product-item:hover {
+        background: rgba(79, 70, 229, 0.04);
+        border-color: rgba(79, 70, 229, 0.1);
+    }
+    .top-product-item.active-filter {
+        background: rgba(79, 70, 229, 0.08);
+        border-color: var(--primary);
+    }
+</style>
+
+<div class="container-fluid py-5 px-4" style="max-width: 1600px; margin: 0 auto;">
+   <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h1 class="h2 text-title-premium mb-1">Intelligence Financière & Écarts de Stock</h1>
+            <p class="text-muted mb-0" style="font-size: 0.9rem; font-weight: 500;">Analyse décisionnelle des pertes et de la rentabilité réelle de <span class="text-primary fw-bold">BEL'R</span></p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <div class="premium-badge-bi bg-white text-dark border-light shadow-sm py-2 px-3">
+                <i class="fa-regular fa-calendar text-primary me-1"></i> 
+                <span>Période : <strong class="text-primary">{{ nom_du_mois_actuel }}</strong></span>
+            </div>
+            <div class="premium-badge-bi">
+                <i class="fa-solid fa-bolt text-primary"></i>MOTEUR BI PREMIUM
+            </div>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs nav-tabs-premium mb-4 border-0" id="biDashboardTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="finance-tab" data-bs-toggle="tab" data-bs-target="#finance-pane" type="button" role="tab"><i class="fa-solid fa-wallet me-2"></i>💰 Finance & Soutenabilité</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="stocks-tab" data-bs-toggle="tab" data-bs-target="#stocks-pane" type="button" role="tab"><i class="fa-solid fa-box-archive me-2"></i>📦 Gestion des Stocks</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="biDashboardTabsContent">
+        
+        <div class="tab-pane fade show active" id="finance-pane" role="tabpanel" aria-labelledby="finance-tab">
+            
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card bi-card p-4 border-0" style="background: linear-gradient(135deg, #ffffff 60%, {% if 'CRITIQUE' in statut_soutenabilite or 'ALERTE' in statut_soutenabilite %}rgba(244, 63, 94, 0.03){% else %}rgba(16, 185, 129, 0.03){% endif %} 100%);">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="icon-shape-soft fs-4" style="{% if 'CRITIQUE' in statut_soutenabilite or 'ALERTE' in statut_soutenabilite %}background: var(--color-cout-reel-soft); color: var(--color-cout-reel);{% else %}background: var(--color-benefice-soft); color: var(--color-benefice);{% endif %}">
+                                    <i class="fa-solid fa-chart-line"></i>
+                                </div>
+                                <div>
+                                    <span class="text-caps-muted text-uppercase d-block mb-1">Diagnostic de Soutenabilité</span>
+                                    <h4 class="fw-extrabold text-dark m-0" style="font-weight: 800;">{{ statut_soutenabilite }}</h4>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-4">
+                                <div class="text-end">
+                                    <span class="text-caps-muted text-uppercase d-block mb-1">Indice d'Effet Ciseaux</span>
+                                    <span class="fs-4 fw-extrabold {% if indice_ciseaux >= 0 %}text-success{% else %}text-danger{% endif %}" style="font-weight: 800;">
+                                        {% if indice_ciseaux > 0 %}+{% endif %}{{ indice_ciseaux|floatformat:2 }}%
+                                    </span>
+                                </div>
+                                <div class="text-end border-start ps-4">
+                                    <span class="text-caps-muted text-uppercase d-block mb-1">Tendance Profitabilité</span>
+                                    <span class="fs-4 fw-extrabold text-dark" style="font-weight: 800;">
+                                        {% if tendance_benefice == "En hausse" %}
+                                            <i class="fa-solid fa-arrow-trend-up text-success me-1"></i> Hausse
+                                        {% else %}
+                                            <i class="fa-solid fa-arrow-trend-down text-danger me-1"></i> Baisse
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bi-card p-4 border-0">
+                        <div class="blur-glow-bg"></div>
+                        <span class="text-caps-muted text-uppercase">Bénéfice Net Salon</span>
+                        <div class="kpi-indicator mt-3 {% if ca_net_salon >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {{ ca_net_salon|floatformat:0 }} <span class="fs-5 fw-medium opacity-70">FCFA</span>
+                        </div>
+                        <p class="text-muted mt-3 mb-0" style="font-size: 0.8rem; font-weight: 500;">
+                            <i class="fa-solid fa-circle-check text-success me-1"></i> Résultat net déduisant toutes charges.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bi-card p-4 border-0">
+                        <span class="text-caps-muted text-uppercase">Chiffre d'Affaires Global (CA)</span>
+                        <div class="kpi-indicator text-dark mt-3">
+                            {{ ca_global|floatformat:0 }} <span class="fs-5 fw-medium text-muted">FCFA</span>
+                        </div>
+                        <p class="text-primary mt-3 mb-0" style="font-size: 0.8rem; font-weight: 500;">
+                            <i class="fa-solid fa-cash-register me-1"></i> Revenus totaux encaissés.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bi-card p-4 border-0">
+                        <span class="text-caps-muted text-uppercase">Masse Salariale du Mois</span>
+                        <div class="kpi-indicator text-dark mt-3">
+                            {{ masse_salariale|floatformat:0 }} <span class="fs-5 fw-medium text-muted">FCFA</span>
+                        </div>
+                        <p class="text-muted mt-3 mb-0" style="font-size: 0.8rem; font-weight: 500;">
+                            <i class="fa-solid fa-users-gear text-primary me-1"></i> Fixes de base + commissions variables.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bi-card p-4 border-0">
+                        <span class="text-caps-muted text-uppercase">Taux d'Effort Global</span>
+                        <div class="kpi-indicator mt-3" style="color: var(--color-cout-theo);">
+                            {{ taux_effort|floatformat:1 }}%
+                        </div>
+                        <p class="text-muted mt-3 mb-0" style="font-size: 0.8rem; font-weight: 500;">
+                            <i class="fa-solid fa-percent me-1"></i> Revenus absorbés par les dépenses globales.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="card bi-card p-3 border-0 bg-white">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="icon-shape-soft" style="background: var(--color-cout-reel-soft); color: var(--color-cout-reel);">
+                                <i class="fa-solid fa-wallet"></i>
+                            </div>
+                            <div>
+                                <span class="text-caps-muted text-uppercase d-block" style="font-size: 0.65rem;">Charges Opérationnelles (Excl. Salaires)</span>
+                                <div class="fw-extrabold fs-5 mt-0" style="font-weight: 800; color: var(--color-cout-reel);">{{ total_charges|floatformat:0 }} F</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bi-card p-3 border-0 bg-white">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-3 w-100">
+                                <div class="icon-shape-soft text-primary" style="background: rgba(79, 70, 229, 0.08);">
+                                    <i class="fa-solid fa-sliders"></i>
+                                </div>
+                                <div class="w-100 pe-3">
+                                    <span class="text-caps-muted text-uppercase d-block" style="font-size: 0.65rem;">Mix Activité : Prestations {{ ratio_service|floatformat:0 }}% vs Boutique {{ ratio_produit|floatformat:0 }}%</span>
+                                    <div class="progress progress-premium mt-1">
+                                        <div class="progress-bar" style="width: {{ ratio_service }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-xl-6">
+                    <div class="card bi-card p-4 border-0 h-100">
+                        <div class="mb-4">
+                            <h5 class="fw-bold text-dark mb-1" style="font-size: 1.05rem;"><i class="fa-solid fa-chart-area text-primary me-2"></i>Graphique 1 : Taux de Croissance Mensuelle</h5>
+                            <p class="text-muted mb-0" style="font-size: 0.8rem;">Analyse dynamique de l'effet ciseaux via la comparaison directe des vitesses de croissance du bénéfice vs coûts.</p>
+                        </div>
+                        <div class="chart-wrapper" style="position: relative; height: 320px;">
+                            <canvas id="chartCroissanceCiseaux"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-6">
+                    <div class="card bi-card p-4 border-0 h-100">
+                        <div class="mb-4">
+                            <h5 class="fw-bold text-dark mb-1" style="font-size: 1.05rem;"><i class="fa-solid fa-chart-line text-success me-2"></i>Graphique 2 : Écarts de Rendement Financier</h5>
+                            <p class="text-muted mb-0" style="font-size: 0.8rem;">Valeurs absolues cumulées des bénéfices nets par rapport aux structures de coûts réels et théoriques.</p>
+                        </div>
+                        <div class="chart-wrapper" style="position: relative; height: 320px;">
+                            <canvas id="chartEvolutionFinancial"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="stocks-pane" role="tabpanel" aria-labelledby="stocks-tab">
+            <div class="row g-4 mb-4">
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bi-card p-4 border-0">
+                        <span class="text-caps-muted text-uppercase">Coût Produit Réel (Manuel + Auto)</span>
+                        <div class="kpi-indicator text-dark mt-3">
+                            {{ cout_stock_reel|floatformat:0 }} <span class="fs-5 fw-medium text-muted">FCFA</span>
+                        </div>
+                        <p class="text-danger mt-3 mb-0" style="font-size: 0.8rem; font-weight: 600;">
+                            <i class="fa-solid fa-arrow-right-from-bracket me-1"></i> Consommation physique totale constatée.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bi-card p-4 border-0">
+                        <span class="text-caps-muted text-uppercase">Coût Produit Théorique (Idéal)</span>
+                        <div class="kpi-indicator text-muted mt-3" style="color: #475569 !important;">
+                            {{ cout_stock_theorique|floatformat:0 }} <span class="fs-5 fw-medium text-muted">FCFA</span>
+                        </div>
+                        <p class="text-primary mt-3 mb-0" style="font-size: 0.8rem; font-weight: 500;">
+                            <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Projection idéale selon fiches techniques.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bi-card p-4 border-0" style="background: linear-gradient(180deg, #ffffff 0%, var(--color-perte-soft) 100%); border-color: rgba(245, 158, 11, 0.2);">
+                        <span class="fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.08em; color: #b45309;">Écart Consommation (Perte Trésorerie)</span>
+                        <div class="kpi-indicator mt-3" style="color: #b45309;">
+                            {{ ecart_inventaire_mois|floatformat:0 }} <span class="fs-5 fw-medium">FCFA</span>
+                        </div>
+                        <p class="text-muted mt-3 mb-0" style="font-size: 0.8rem; font-weight: 500; color: #92400e !important;">
+                            <i class="fa-solid fa-triangle-exclamation me-1" style="color: #d97706;"></i> Valeur financière manquante en inventaire.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bi-card p-4 border-0" style="background: linear-gradient(180deg, #ffffff 0%, rgba(244, 63, 94, 0.02) 100%); border-color: rgba(244, 63, 94, 0.2);">
+                        <span class="text-caps-muted text-uppercase" style="color: var(--color-cout-reel);">Taux de Coulage Réel</span>
+                        <div class="kpi-indicator mt-3 text-danger">
+                            {{ taux_coulage|floatformat:1 }}%
+                        </div>
+                        <p class="text-muted mt-3 mb-0" style="font-size: 0.8rem; font-weight: 500;">
+                            <i class="fa-solid fa-gauge-high text-danger me-1"></i> Proportion de gâchis sur le stock utilisé.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-lg-8">
+                    <div class="card bi-card p-4 border-0 h-100">
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <div>
+                                <h5 class="fw-bold text-dark mb-1" id="titleVolumeChart" style="font-size: 1.05rem;"><i class="fa-solid fa-box text-primary me-2"></i>Graphique 3 : Consommation Logistique Mensuelle</h5>
+                                <p class="text-muted mb-0" style="font-size: 0.8rem;">Volumes mensuels de sorties physiques analysés sur l'historique glissant.</p>
+                            </div>
+                            <button id="btnResetVolume" class="btn btn-sm btn-light border d-none" onclick="resetToGlobalVolume()" style="border-radius: 10px; font-weight: 600; font-size: 0.78rem;">
+                                <i class="fa-solid fa-arrow-rotate-left me-1"></i> Réinitialiser Global
+                            </button>
+                        </div>
+                        <div class="chart-wrapper" style="position: relative; height: 320px;">
+                            <canvas id="chartVolumeBarres"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card bi-card p-4 border-0 h-100">
+                        <div class="mb-4">
+                            <h5 class="fw-bold text-dark mb-1" style="font-size: 1.05rem;">Top Produits Consommés (Coûts PAMP)</h5>
+                            <p class="text-muted mb-0" style="font-size: 0.8rem;">Cliquez sur un produit pour analyser sa courbe de volume.</p>
+                        </div>
+                        <div class="d-flex flex-column gap-3">
+                            {% for item in top_produits_consommes %}
+                            <div class="top-product-item" data-product-id="{{ item.id }}" data-product-name="{{ item.nom_produit }}" onclick="filterChartByProduct('{{ item.id }}', this)">
+                                <div class="d-flex justify-content-between align-items-center mb-2" style="font-size: 0.88rem;">
+                                    <span class="fw-semibold text-dark"><i class="fa-solid fa-chart-line text-primary me-1 opacity-50"></i> {{ item.nom_produit }}</span>
+                                    <span class="fw-bold font-monospace text-danger" style="font-weight: 700;">{{ item.cout_total|floatformat:0 }} F</span>
+                                </div>
+                                <div class="progress progress-premium">
+                                    <div class="progress-bar progress-bar-danger" style="width: 75%;"></div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center py-5 text-muted" style="font-size: 0.85rem;">
+                                <i class="fa-solid fa-box-open d-block mb-2 fs-4 text-light"></i> Aucun mouvement logistique ce mois-ci.
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // ====================================================================
+    // 1. EXTRACTION PARFAITE DES MATRICES DE DONNÉES SÉRIALISÉES
+    // ====================================================================
+    const chartLabels = {{ chart_labels_json|safe }};
+    
+    // Données relatives au Graphique 1 (Nouveau graphique de croissance)
+    const croissanceBenefices = {{ chart_croissance_benefices_json|safe }};
+    const croissanceCouts = {{ chart_croissance_couts_json|safe }};
+    
+    // Données relatives au Graphique 2 (Écarts de Rendement Financier)
+    const dataBenefices = {{ chart_benefices_json|safe }};
+    const dataCoutsReels = {{ chart_couts_reels_json|safe }};
+    const dataCoutsTheoriques = {{ chart_couts_theoriques_json|safe }};
+    
+    // Données relatives au Graphique 3 (Volumes de Stocks globaux)
+    window.globalVolumeValues = {{ chart_volume_global_json|safe }};
+    window.dictHistoriqueProduits = {{ dict_historique_produits_json|safe }};
+
+    // ====================================================================
+    // 2. INITIALISATION GRAPHIQUE 1 : CROISSANCE MENSUELLE (EFFET CISEAUX)
+    // ====================================================================
+    const ctxCroissance = document.getElementById('chartCroissanceCiseaux').getContext('2d');
+    new Chart(ctxCroissance, {
+        type: 'line',
+        data: {
+            labels: chartLabels,
+            datasets: [
+                {
+                    label: 'Vitesse Croissance Bénéfices (%)',
+                    data: croissanceBenefices,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                    borderWidth: 3,
+                    tension: 0.2,
+                    fill: true
+                },
+                {
+                    label: 'Vitesse Croissance Coûts (%)',
+                    data: croissanceCouts,
+                    borderColor: '#4f46e5',
+                    borderWidth: 2,
+                    borderDash: [4, 4],
+                    tension: 0.2,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top', labels: { font: { family: 'Plus Jakarta Sans', weight: 600 } } } },
+            scales: { y: { ticks: { callback: function(value) { return value + '%'; } } } }
+        }
+    });
+
+    // ====================================================================
+    // 3. INITIALISATION GRAPHIQUE 2 : ANCIENS COMPOSANTS FINANCIERS VALEURS ABSOLUES
+    // ====================================================================
+    const ctxFinancial = document.getElementById('chartEvolutionFinancial').getContext('2d');
+    new Chart(ctxFinancial, {
+        type: 'line',
+        data: {
+            labels: chartLabels,
+            datasets: [
+                {
+                    label: 'Bénéfice Réel (FCFA)',
+                    data: dataBenefices,
+                    borderColor: '#10b981',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: false
+                },
+                {
+                    label: 'Coût Réel (FCFA)',
+                    data: dataCoutsReels,
+                    borderColor: '#f43f5e',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: false
+                },
+                {
+                    label: 'Coût Théorique (FCFA)',
+                    data: dataCoutsTheoriques,
+                    borderColor: '#3b82f6',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    tension: 0.3,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top', labels: { font: { family: 'Plus Jakarta Sans', weight: 600 } } } }
+        }
+    });
+
+    // ====================================================================
+    // 4. INITIALISATION GRAPHIQUE 3 : LOGISTIQUE ET BARRES DE VOLUME
+    // ====================================================================
+    const ctxVolume = document.getElementById('chartVolumeBarres').getContext('2d');
+    window.volumeChartInstance = new Chart(ctxVolume, {
+        type: 'bar',
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                label: 'Volume Physique Sorti',
+                data: window.globalVolumeValues,
+                backgroundColor: '#4f46e5',
+                borderRadius: 8,
+                barPercentage: 0.5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
+});
+
+// ====================================================================
+// 5. SCRIPTS INTERACTIFS POUR LE LE FILTRAGE LOGISTIQUE PAR PRODUIT
+// ====================================================================
+function filterChartByProduct(productId, element) {
+    document.querySelectorAll('.top-product-item').forEach(el => el.classList.remove('active-filter'));
+    element.classList.add('active-filter');
+    document.getElementById('btnResetVolume').classList.remove('d-none');
+    
+    const productName = element.getAttribute('data-product-name');
+    document.getElementById('titleVolumeChart').innerText = `Suivi de Consommation : ${productName}`;
+    
+    // Recherche et extraction de l'historique de volume du produit sélectionné
+    if (window.dictHistoriqueProduits && window.dictHistoriqueProduits[productId]) {
+        const productSpecificVolumes = window.dictHistoriqueProduits[productId];
+        window.volumeChartInstance.data.datasets[0].data = productSpecificVolumes;
+        window.volumeChartInstance.data.datasets[0].backgroundColor = '#f43f5e'; // Rouge d'alerte lors du filtrage produit
+        window.volumeChartInstance.update();
+    }
+}
+
+function resetToGlobalVolume() {
+    document.querySelectorAll('.top-product-item').forEach(el => el.classList.remove('active-filter'));
+    document.getElementById('btnResetVolume').classList.add('d-none');
+    document.getElementById('titleVolumeChart').innerText = "Suivi Historique de Consommation Logistique";
+    
+    if (window.volumeChartInstance) {
+        window.volumeChartInstance.data.datasets[0].data = window.globalVolumeValues;
+        window.volumeChartInstance.data.datasets[0].backgroundColor = '#4f46e5'; // Retour à la teinte indigo globale
+        window.volumeChartInstance.update();
+    }
+}
+</script>
+
+{% endblock %}

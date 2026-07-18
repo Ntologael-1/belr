@@ -1,0 +1,84 @@
+
+{% load auth_extras %}
+<nav class="top-navbar">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <button class="btn btn-outline-primary d-lg-none me-3" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h4 class="mb-0 d-inline">
+                {% block page_title %}{% endblock %}
+            </h4>
+            <nav aria-label="breadcrumb" class="d-inline ms-3">
+                <ol class="breadcrumb mb-0 d-inline">
+                    {% block breadcrumb %}{% endblock %}
+                </ol>
+            </nav>
+        </div>
+        
+        <div class="d-flex align-items-center gap-3">
+            <div class="dropdown">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" 
+                        data-bs-toggle="dropdown">
+                    <i class="fas fa-plus me-2"></i> Créer
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'historique_paiement' %}">
+                        <i class="fas fa-calendar-plus me-2"></i>Historique_Vente
+                    </a></li>
+                    {% if request.user|is_manager_or_above %} 
+                        <li><a class="dropdown-item" href="{% url 'inventaire:historique_mouvements_global' %}">
+                            <i class="fas fa-user-plus me-2"></i>flux_stock
+                        </a></li>
+                        {% if user.is_staff %}
+                        <li><a class="dropdown-item" href="{% url 'service_create' %}">
+                            <i class="fas fa-spa me-2"></i>Nouveau Service
+                        </a></li>
+                        {% endif %}
+                    {% endif %}
+                </ul>
+            </div>
+            
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" 
+                        data-bs-toggle="dropdown">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge bg-danger">3</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><h6 class="dropdown-header">Notifications</h6></li>
+                    <li><a class="dropdown-item" href="#">
+                        <i class="fas fa-calendar text-primary me-2"></i>
+                        RDV dans 30 min: Marie Dupont
+                    </a></li>
+                    <li><a class="dropdown-item" href="#">
+                        <i class="fas fa-box text-warning me-2"></i>
+                        Stock bas: Shampoing
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-center" href="#">
+                        Voir toutes
+                    </a></li>
+                </ul>
+            </div>
+            
+            <div class="current-time">
+                <span class="badge bg-primary">
+                    <i class="fas fa-clock me-1"></i>
+                    <span id="live-time"></span>
+                </span>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<script>
+    // Live time update
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('live-time').textContent = 
+            now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+</script>

@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+
+{% block title %}Mon Tableau de Bord{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-user-tie me-2"></i>Mon Espace Coiffeur
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+<li class="breadcrumb-item active">Mon Tableau</li>
+{% endblock %}
+
+
+
+{% block content %}
+
+<style>
+    .avatar-xl {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .profile-info {
+        padding: 1rem;
+        background-color: rgba(0, 0, 0, 0.02);
+        border-radius: 10px;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 60px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 30px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+    }
+    
+    .timeline-time {
+        min-width: 70px;
+    }
+    
+    .timeline-item {
+        position: relative;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -30px;
+        top: 15px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        border: 3px solid white;
+        box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.2);
+    }
+    
+    .bg-purple {
+        background-color: #8A2BE2 !important;
+    }
+</style>
+
+
+
+
+
+<div class="stat-card mb-4">
+    <form method="get" class="row align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Mois</label>
+            <select name="month" class="form-select">
+                {% for value, label in months %}
+                <option value="{{ value }}" {% if value == selected_month %}selected{% endif %}>
+                    {{ label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Année</label>
+            <select name="year" class="form-select">
+                {% for y in years %}
+                <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>
+                    {{ y }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-filter me-1"></i> Filtrer
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-4 mb-4">
+        <div class="stat-card h-100">
+            <div class="text-center mb-4">
+                <div class="avatar-xl mx-auto mb-3">
+                    {% if employe.photo %}
+                    <img src="{{ employe.photo.url }}" class="rounded-circle w-100 h-100" style="object-fit: cover; border: 4px solid var(--primary-color);">
+                    {% else %}
+                    <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center w-100 h-100" style="border: 4px solid var(--primary-color);">
+                        <i class="fas fa-user-tie fa-3x text-white"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <h3>{{ employe.nom_complet }}</h3>
+                <p class="text-muted">
+                    <i class="fas fa-certificate me-1" style="color: {{ employe.couleur_calendrier }};"></i>
+                    {{ employe.specialite|default:"Coiffeur Professionnel" }}
+                </p>
+                <div class="d-flex justify-content-center gap-2">
+                    <span class="badge bg-primary">{{ employe.type_contrat }}</span>
+                    <span class="badge bg-success">{{ employe.anciennete }} ans d'exp.</span>
+                </div>
+            </div>
+            
+            <div class="profile-info">
+                <div class="info-item d-flex justify-content-between mb-2">
+                    <span class="text-muted">Salaire Fixe:</span>
+                    <strong class="text-dark">{{ stats.salaire_fixe|floatformat:0 }} FCFA</strong>
+                </div>
+                <div class="info-item d-flex justify-content-between mb-2">
+                    <span class="text-muted">Bonus Actuel:</span>
+                    <strong class="{% if stats.bonus > 0 %}text-success{% else %}text-muted{% endif %}">
+                        {{ stats.bonus|floatformat:0 }} FCFA
+                    </strong>
+                </div>
+                <div class="info-item d-flex justify-content-between">
+                    <span class="text-muted">Horaires:</span>
+                    <strong>{{ employe.heure_debut|time:"H:i" }} - {{ employe.heure_fin|time:"H:i" }}</strong>
+                </div>
+            </div>
+            
+            <div class="mt-4 text-center">
+                <button class="btn btn-outline-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#disponibilityModal">
+                    <i class="fas fa-calendar-edit me-1"></i> Mes disponibilités
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="row">
+            <div class="col-md-4 col-6 mb-4">
+                <div class="stat-card text-center shadow-sm">
+                    <div class="stat-icon bg-primary bg-opacity-10 text-primary mx-auto">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <h3 class="stat-value mb-0">{{ stats.ca_total|floatformat:0 }}</h3>
+                    <p class="text-muted mb-0">Mon CA (Services + Packs)</p>
+                </div>
+            </div>
+
+            <div class="col-md-4 col-6 mb-4">
+                <div class="stat-card text-center shadow-sm">
+                    <div class="stat-icon bg-success bg-opacity-10 text-success mx-auto">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <h3 class="stat-value mb-0">{{ stats.total_revenu|floatformat:0 }}</h3>
+                    <p class="text-muted mb-0">Revenu estimé (Fixe+Bonus)</p>
+                </div>
+            </div>
+
+            <div class="col-md-4 col-12 mb-4">
+                <div class="stat-card text-center shadow-sm">
+                    <div class="stat-icon bg-warning bg-opacity-10 text-warning mx-auto">
+                        <i class="fas fa-cut"></i>
+                    </div>
+                    <h3 class="stat-value mb-0">{{ stats.nb_services }}</h3>
+                    <p class="text-muted mb-0">Prestations réalisées</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="mb-0">Objectif Mensuel</h5>
+                    <small class="text-muted">Cible : {{ objectif_ca|floatformat:0 }} FCFA</small>
+                </div>
+                <div class="text-end">
+                    <span class="badge {% if progression >= 100 %}bg-success{% else %}bg-purple{% endif %}">
+                        {{ progression }}%
+                    </span>
+                </div>
+            </div>
+            <div class="progress" style="height: 12px; border-radius: 10px;">
+                <div class="progress-bar {% if progression >= 100 %}bg-success{% else %}bg-purple{% endif %} progress-bar-striped progress-bar-animated"
+                     role="progressbar" style="width: {{ progression }}%">
+                </div>
+            </div>
+            {% if stats.bonus == 0 %}
+            <small class="text-danger mt-2 d-block"><i class="fas fa-info-circle me-1"></i> Atteignez l'objectif pour débloquer votre bonus.</small>
+            {% else %}
+            <small class="text-success mt-2 d-block"><i class="fas fa-check-circle me-1"></i> Bonus débloqué ! Vous êtes au palier supérieur.</small>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="stat-card mb-4">
+            <h5 class="mb-4"><i class="fas fa-chart-line me-2 text-primary"></i>Évolution de mon CA (6 mois)</h5>
+            <div style="height: 300px;"><canvas id="performanceChart"></canvas></div>
+        </div>
+
+        <div class="stat-card">
+            <h5 class="mb-4"><i class="fas fa-receipt me-2 text-primary"></i>Mes derniers services</h5>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Détails</th>
+                            <th class="text-end">Valeur CA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for paiement in derniers_paiements %}
+                        <tr>
+                            <td>{{ paiement.date_paiement|date:"d/m H:i" }}</td>
+                            <td>
+                                {% for s in paiement.services.all %}
+                                <span class="badge bg-light text-dark">{{ s.nom }}</span>
+                                {% endfor %}
+                            </td>
+                            <td class="text-end fw-bold">{{ paiement.total_services|floatformat:0 }} FCFA</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-center py-4 text-muted">Aucune activité enregistrée</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="stat-card mb-4">
+            <h5 class="mb-4"><i class="fas fa-star me-2 text-warning"></i>Services les plus rentables</h5>
+            <div style="height: 250px;"><canvas id="servicesChart"></canvas></div>
+        </div>
+
+        <div class="stat-card">
+            <h5>Actions Rapides</h5>
+            <button class="btn btn-saloon w-100 mb-3" id="checkInBtn">
+                <i class="fas fa-sign-in-alt me-1"></i> Pointer l'arrivée
+            </button>
+            <div id="checkInTime" class="text-center small text-muted mb-3"></div>
+            <button class="btn btn-outline-success w-100" data-bs-toggle="modal" data-bs-target="#pauseModal">
+                <i class="fas fa-coffee me-1"></i> Pause Déjeuner
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-xl { width: 120px; height: 120px; }
+    .profile-info { padding: 1rem; background: #f8f9fa; border-radius: 12px; border: 1px solid #eee; }
+    .bg-purple { background-color: #8A2BE2 !important; color: white; }
+    .progress { background-color: #e9ecef; }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const evolutionData = {{ evolution_json|safe }};
+    const servicesData = {{ services_rentables_json|safe }};
+    const objVal = {{ objectif_ca }};
+
+    // Graphique Performance (CA Mensuel)
+    const perfCtx = document.getElementById('performanceChart').getContext('2d');
+    new Chart(perfCtx, {
+        type: 'line',
+        data: {
+            labels: evolutionData.map(e => e.mois),
+            datasets: [{
+                label: 'Mon Chiffre d\'Affaires',
+                data: evolutionData.map(e => e.total),
+                borderColor: '#8A2BE2',
+                backgroundColor: 'rgba(138, 43, 226, 0.1)',
+                fill: true,
+                tension: 0.4
+            }, {
+                label: 'Objectif',
+                data: Array(evolutionData.length).fill(objVal),
+                borderColor: '#28a745',
+                borderDash: [5, 5],
+                pointRadius: 0
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    // Graphique Services Rentables
+    const servCtx = document.getElementById('servicesChart').getContext('2d');
+    new Chart(servCtx, {
+        type: 'doughnut',
+        data: {
+            labels: servicesData.map(s => s.services__nom),
+            datasets: [{
+                data: servicesData.map(s => s.total),
+                backgroundColor: ['#8A2BE2', '#FFC107', '#20c997', '#fd7e14', '#0d6efd']
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // Check-in (Logique simplifiée)
+    document.getElementById('checkInBtn').addEventListener('click', function() {
+        this.innerHTML = '<i class="fas fa-check me-1"></i> Présence validée';
+        this.className = 'btn btn-success w-100 mb-3';
+        document.getElementById('checkInTime').innerText = "Arrivée enregistrée à " + new Date().toLocaleTimeString();
+    });
+</script>
+{% endblock %}

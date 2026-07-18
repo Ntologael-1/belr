@@ -1,0 +1,341 @@
+{% extends 'base.html' %}
+{% load auth_extras %}
+
+{% block title %}Accueil - BEL'R Premium{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Surcharge locale pour supprimer l'effet de la sidebar manquante sur l'accueil */
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+    
+    /* Variables de la marque BEL'R */
+    :root {
+        --belr-pink-dark: #D42A5B;
+        --belr-pink-light: #FF6B8B;
+        --belr-gradient: linear-gradient(135deg, #FF6B8B 0%, #D42A5B 100%);
+        --belr-soft-bg: rgba(255, 107, 139, 0.05);
+        --belr-card-bg: rgba(255, 255, 255, 0.75);
+    }
+
+    /* Hero Banner Premium - Restructuré au Nombre d'Or */
+    .hero-belr {
+        background: linear-gradient(rgba(45, 48, 71, 0.02), rgba(45, 48, 71, 0.02)), url('https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80') center/cover;
+        border-radius: 24px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 10px 30px rgba(212, 42, 91, 0.03);
+        /* Application du nombre d'or pour le conteneur image */
+        width: 100%;
+        aspect-ratio: 1.618 / 1; 
+        min-height: 380px; /* Sécurité pour le contenu textuel sur petit écran */
+    }
+    
+    .hero-overlay {
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.92) 45%, rgba(255, 255, 255, 0) 100%);
+        padding: 3.5rem 3rem;
+        height: 100%;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Conteneur de texte ajusté à la proportion dorée (61.8%) */
+    .golden-text-container {
+        width: 61.8%;
+        max-width: 61.8%;
+        flex: 0 0 61.8%;
+    }
+
+    @media (max-width: 991px) {
+        .hero-belr { aspect-ratio: auto; } /* Flexibilité sur mobile */
+        .golden-text-container { width: 100%; max-width: 100%; flex: 0 0 100%; }
+        .hero-overlay { background: rgba(255, 255, 255, 0.95); padding: 2rem 1.5rem; }
+    }
+
+    .brand-title {
+        font-family: 'Playfair Display', serif;
+        font-weight: 700;
+        font-size: 3.2rem;
+        background: var(--belr-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0rem;
+        line-height: 1.1;
+    }
+
+    .brand-subtitle {
+        font-size: 0.95rem;
+        letter-spacing: 3px;
+        color: #718096;
+        text-transform: uppercase;
+        font-weight: 500;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Cartes de Services Logicielles avec Fond Blanc Adouci (Effet SaaS) */
+    .service-card-premium {
+        background: var(--belr-card-bg);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(230, 233, 240, 0.6);
+        border-radius: 16px;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        height: 100%;
+    }
+
+    .service-card-premium:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(212, 42, 91, 0.06);
+        border-color: var(--belr-pink-light);
+        background: #ffffff;
+    }
+
+    /* Boutons Raccourcis Bas de page adoucis */
+    .shortcut-card {
+        background: var(--belr-card-bg);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(230, 233, 240, 0.5);
+        border-radius: 12px;
+        transition: all 0.2s ease;
+    }
+    
+    .shortcut-card:hover {
+        background: #ffffff;
+        transform: translateY(-2px);
+    }
+
+    .icon-shape {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        background: var(--belr-soft-bg);
+        color: var(--belr-pink-dark);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        transition: all 0.3s ease;
+    }
+
+    .service-card-premium:hover .icon-shape {
+        background: var(--belr-gradient);
+        color: #ffffff;
+    }
+
+    /* Boutons de la marque */
+    .btn-belr {
+        background: var(--belr-gradient);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 12px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 15px rgba(255, 107, 139, 0.15);
+    }
+
+    .btn-belr:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(212, 42, 91, 0.25);
+        color: white;
+    }
+
+    .btn-belr-outline {
+        border: 1px solid var(--belr-pink-light);
+        color: var(--belr-pink-dark);
+        background: transparent;
+        padding: 0.75rem 2rem;
+        border-radius: 12px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .btn-belr-outline:hover {
+        background: var(--belr-soft-bg);
+        color: var(--belr-pink-dark);
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-0 mt-2">
+
+    <!-- Section Hero (Bandeau de Bienvenue personnalisé) -->
+    <div class="hero-belr mb-5">
+        <div class="hero-overlay">
+            <!-- Remplacement de col-lg-8 par le conteneur doré à 61.8% -->
+            <div class="golden-text-container">
+                {% if request.user|is_manager_or_above %}
+                    <!-- Version Gérant / Manager -->
+                    <span class="badge bg-white text-dark shadow-sm mb-3 px-3 py-2 text-uppercase fw-semibold tracking-wider" style="color: var(--belr-pink-dark) !important; border-radius: 30px;">
+                        <i class="fas fa-sparkles me-2"></i>Espace Management
+                    </span>
+                    
+                    <div class="d-flex align-items-center gap-3 mb-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 150" style="width: 55px; height: 68px;">
+                            <defs>
+                                <linearGradient id="belrPremiumGoldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#D7B19D" />
+                                    <stop offset="50%" stop-color="#C59B84" />
+                                    <stop offset="100%" stop-color="#A2745C" />
+                                </linearGradient>
+                            </defs>
+                            <g fill="url(#belrPremiumGoldGradient)">
+                                <path d="M43.1,38.5 C33.2,43.2 24.5,52.8 21.2,66.3 C18.1,79.1 20.4,91.8 25.4,101.9 C27.1,105.3 27.6,102.1 26.5,99.2 C22.4,88.4 22.3,76.5 26.4,65.6 C30.2,55.5 37.9,46.8 47.2,41.2 C48.9,40.2 45.1,37.5 43.1,38.5 Z" />
+                                <path d="M53.5,33.5 C36.2,39.1 23.8,55.1 22.1,74.6 C20.9,88.2 24.5,102.5 32.1,114.2 C35.2,119.0 36.5,123.6 34.6,128.5 C33.1,132.3 30.1,135.5 28.5,139.2 C28.1,140.2 29.5,140.8 30.2,139.9 C36.1,132.5 37.5,122.9 36.4,113.6 C35.4,105.2 32.2,97.3 29.6,89.3 C26.2,78.8 26.1,67.1 30.8,56.8 C35.8,45.8 45.6,37.4 56.4,33.1 C57.9,32.5 55.1,33.0 53.5,33.5 Z" />
+                                <path d="M68.5,34.2 C51.3,42.1 40.1,60.2 39.2,79.8 C38.6,93.4 42.5,106.3 49.3,117.4 C52.1,122.0 51.5,127.8 48.2,132.1 C45.3,135.9 41.5,139.1 38.6,143.0 C38.1,143.7 39.4,144.5 40.1,143.8 C48.1,135.6 52.8,125.6 53.9,114.1 C54.9,103.6 51.2,93.4 47.2,83.8 C42.8,73.1 42.3,61.1 47.1,50.5 C51.7,40.3 61.1,34.3 71.2,32.8 C72.8,32.6 70.1,33.5 68.5,34.2 Z" />
+                                <path d="M84.2,40.8 C66.8,47.5 56.5,65.3 56.2,83.9 C56.0,95.1 59.8,105.1 66.1,114.3 C71.5,122.2 73.1,131.5 69.2,140.3 C68.8,141.2 70.4,141.9 71.0,140.9 C78.2,129.2 74.8,116.5 68.4,106.1 C63.1,97.5 59.9,87.7 61.2,77.4 C62.8,64.8 71.5,54.1 82.5,47.3 C86.2,45.0 87.8,42.5 84.2,40.8 Z" />
+                                <path d="M84.6,48.1 C84.0,52.2 82.5,55.9 80.2,59.3 C78.2,62.2 77.2,65.6 77.6,69.1 C78.0,72.5 80.5,75.1 83.4,76.9 C86.2,78.6 89.4,79.5 92.5,81.1 C94.2,82.0 95.5,83.5 94.1,85.6 C92.8,87.5 90.1,87.2 88.0,88.0 C85.6,88.9 83.9,90.4 84.8,93.3 C85.4,95.2 87.8,95.3 87.1,97.7 C86.3,100.4 82.3,100.6 80.2,102.1 C77.2,104.2 75.3,107.5 74.5,111.1 C73.1,117.5 76.2,124.2 80.5,129.1 C82.8,131.7 85.5,133.9 88.3,136.0 C89.2,136.7 90.1,135.2 89.2,134.5 C83.5,129.9 77.6,122.9 79.5,114.9 C80.3,111.5 82.5,108.8 85.4,106.8 C88.3,104.8 91.1,104.2 92.8,100.8 C93.7,99.0 92.8,97.6 91.0,97.0 C89.1,96.4 87.8,94.9 88.8,92.8 C89.6,91.1 91.6,91.3 93.3,90.9 C95.3,90.4 97.4,89.5 98.5,87.5 C99.8,85.1 98.4,83.1 96.3,82.0 C92.4,80.0 88.6,78.8 85.3,75.8 C82.5,73.3 80.7,70.0 81.3,66.1 C81.8,62.6 83.7,59.5 85.3,56.4 C86.5,54.0 87.7,51.3 86.8,48.5 C86.5,47.5 84.9,47.2 84.6,48.1 Z" />
+                                <path d="M78.5,62.5 C81.2,63.1 83.5,64.8 85.2,67.1 C85.6,67.6 86.3,66.9 85.9,66.4 C84.1,64.0 81.6,62.3 78.7,61.6 C78.1,61.5 77.9,62.4 78.5,62.5 Z" />
+                            </g>
+                        </svg>
+                        <h1 class="brand-title mb-0">BEL'R</h1>
+                    </div>
+                    <div class="brand-subtitle">Institut de Beauté</div>
+                    
+                    <h2 class="h4 fw-bold text-dark mb-3">Bonjour, {{ user.get_full_name|default:user.username }} 👋</h2>
+                    <p class="text-muted mb-4 lead" style="font-size: 1.05rem;">
+                        Bienvenue sur votre plateforme de pilotage. Gérez vos équipes, suivez vos stocks de fiches techniques et analysez les performances de votre salon en toute simplicité.
+                    </p>
+                {% else %}
+                    <!-- Version Collaborateur (Coiffeurs / Staff) -->
+                    <span class="badge bg-white text-dark shadow-sm mb-3 px-3 py-2 text-uppercase fw-semibold tracking-wider" style="color: var(--belr-pink-dark) !important; border-radius: 30px;">
+                        <i class="fas fa-heart me-2"></i>Espace Collaborateur
+                    </span>
+                    
+                    <div class="d-flex align-items-center gap-3 mb-1">
+                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="width: 55px; height: 55px;">
+                            <defs>
+                                <linearGradient id="belrPremiumGoldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#D7B19D" />
+                                    <stop offset="50%" stop-color="#C59B84" />
+                                    <stop offset="100%" stop-color="#A2745C" />
+                                </linearGradient>
+                            </defs>
+                            <g fill="url(#belrPremiumGoldGradient)">
+                                <path d="M30,75 C22,60 22,40 35,25 C25,40 25,65 35,80 C32,79 31,77 30,75 Z" opacity="0.6"/>
+                                <path d="M40,85 C28,65 28,35 45,18 C32,35 32,70 45,90 C42,89 41,87 40,85 Z" opacity="0.8"/>
+                                <path d="M52,15 C35,22 35,55 48,92 C51,95 48,100 44,105 C54,98 56,85 54,75 C50,55 45,35 55,20 C56,18 54,16 52,15 Z"/>
+                                <path d="M58,22 C64,28 68,36 68,44 C68,48 71,51 74,53 C71,55 67,55 65,58 C63,60 62,64 64,68 C61,69 57,72 55,76 C52,82 52,88 56,94 C50,86 48,74 52,62 C55,52 58,35 58,22 Z"/>
+                            </g>
+                        </svg>
+                        <h1 class="brand-title mb-0">BEL'R</h1>
+                    </div>
+                    <div class="brand-subtitle">Institut de Beauté</div>
+                    
+                    <h2 class="h4 fw-bold text-dark mb-3">Ravi de vous revoir, {{ user.get_full_name|default:user.username }} ✨</h2>
+                    <p class="text-muted mb-4 lead" style="font-size: 1.05rem;">
+                        Heureux de vous accompagner pour cette nouvelle journée à l'institut. Suivez l'atteinte de vos objectifs du mois, consultez vos statistiques de fiches cabines et donnez le meilleur à notre précieuse clientèle.
+                    </p>
+                {% endif %}
+                
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{% url 'services_list' %}" class="btn btn-belr">
+                        <i class="fas fa-spa me-2"></i>Aperçu des Services
+                    </a>
+                    {% if request.user|is_manager_or_above %}
+                    <a href="{% url 'dashboard' %}" class="btn btn-belr-outline">
+                        <i class="fas fa-chart-line me-2"></i>Tableau de Bord
+                    </a>
+                    {% else %}
+                    <a href="{% url 'employes_list' %}" class="btn btn-belr-outline">
+                        <i class="fas fa-trophy me-2"></i>Mes Performances
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Architecture des Services -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1">Architecture des Services</h3>
+            <p class="text-muted small mb-0">Visualisez l'organisation des prestations de votre catalogue pour les encaissements fiches cabines.</p>
+        </div>
+        <a href="{% url 'services_list' %}" class="text-decoration-none fw-semibold small" style="color: var(--belr-pink-dark);">
+            Voir tout le catalogue <i class="fas fa-arrow-right ms-1"></i>
+        </a>
+    </div>
+
+    <!-- Grille des 3 Types de Services -->
+    <div class="row g-4 mb-5">
+        <div class="col-12 col-md-4">
+            <div class="card service-card-premium p-4">
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div class="icon-shape">
+                        <i class="fas fa-cut"></i>
+                    </div>
+                    <span class="badge rounded-pill bg-light text-muted border small">Actif</span>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">Coupes & Visagisme</h5>
+                <p class="text-muted small mb-0">Prestations de coiffure classiques et créations de styles sur-mesure pour hommes, femmes et enfants.</p>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="card service-card-premium p-4">
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div class="icon-shape">
+                        <i class="fas fa-mortar-pestle"></i>
+                    </div>
+                    <span class="badge rounded-pill bg-light text-muted border small">Technique</span>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">Coloration & Fiches Techniques</h5>
+                <p class="text-muted small mb-0">Mèches, balayages et applications de couleurs directement connectés aux déductions d'inventaire automatisées.</p>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="card service-card-premium p-4">
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div class="icon-shape">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <span class="badge rounded-pill bg-light text-muted border small">Multi-coiffeurs</span>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">Packs & Forfaits Premium</h5>
+                <p class="text-muted small mb-0">Offres combinées avec calcul de la répartition au prorata des coûts pour les collaborateurs du salon.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liens d'accès rapides -->
+    <div class="row g-3">
+        <div class="col-6 col-sm-4 col-md-2">
+            <a href="{% url 'employes_list' %}" class="card shortcut-card border-0 shadow-sm text-center p-3 text-decoration-none text-dark h-100 d-flex flex-column align-items-center justify-content-center">
+                <i class="fas fa-user-tie mb-2 text-muted" style="font-size: 1.2rem;"></i>
+                <span class="small fw-medium">Coiffeurs</span>
+            </a>
+        </div>
+        {% if request.user|is_manager_or_above %}
+        <div class="col-6 col-sm-4 col-md-2">
+            <a href="{% url 'clients_list' %}" class="card shortcut-card border-0 shadow-sm text-center p-3 text-decoration-none text-dark h-100 d-flex flex-column align-items-center justify-content-center">
+                <i class="fas fa-users mb-2 text-muted" style="font-size: 1.2rem;"></i>
+                <span class="small fw-medium">Clients</span>
+            </a>
+        </div>
+        <div class="col-6 col-sm-4 col-md-2">
+            <a href="{% url 'inventaire:liste_produits' %}" class="card shortcut-card border-0 shadow-sm text-center p-3 text-decoration-none text-dark h-100 d-flex flex-column align-items-center justify-content-center">
+                <i class="fas fa-boxes mb-2 text-muted" style="font-size: 1.2rem;"></i>
+                <span class="small fw-medium">Stocks</span>
+            </a>
+        </div>
+        {% endif %}
+        {% if request.user|has_group:"Gérant" %}
+        <div class="col-6 col-sm-4 col-md-2">
+            <a href="{% url 'rapports:rapport_global' %}" class="card shortcut-card border-0 shadow-sm text-center p-3 text-decoration-none text-dark h-100 d-flex flex-column align-items-center justify-content-center">
+                <i class="fas fa-chart-pie mb-2 text-muted" style="font-size: 1.2rem;"></i>
+                <span class="small fw-medium">Rapports</span>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

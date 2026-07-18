@@ -1,0 +1,1070 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Coiffeur - {{ employe.nom_complet }}{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-user-tie me-2"></i>Profil Coiffeur
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+<li class="breadcrumb-item"><a href="{% url 'employes_list' %}">Coiffeurs</a></li>
+<li class="breadcrumb-item active">{{ employe.nom_complet }}</li>
+{% endblock %}
+
+<!-- 
+<div class="row">
+    
+    <div class="col-12 mb-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center">
+                <div class="avatar-xxl me-4">
+                    {% if employe.photo %}
+                    <img src="{{ employe.photo.url }}" class="rounded-circle w-100 h-100" 
+                         style="object-fit: cover; border: 4px solid {{ employe.couleur_calendrier|default:'#8A2BE2' }};">
+                    {% else %}
+                    <div class="rounded-circle d-flex align-items-center justify-content-center w-100 h-100" 
+                         style="border: 4px solid {{ employe.couleur_calendrier|default:'#8A2BE2' }};
+                                background-color: {{ employe.couleur_calendrier|default:'#8A2BE2' }};">
+                        <i class="fas fa-user-tie fa-3x text-white"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="flex-grow-1">
+                    <h2 class="mb-1">{{ employe.nom_complet }}</h2>
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-certificate me-1"></i>
+                        {{ employe.specialite|default:"Coiffeur Professionnel" }}
+                    </p>
+                    
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <span class="badge bg-primary">{{ employe.type_contrat }}</span>
+                        <span class="badge bg-success">
+                            {{ employe.anciennete }} an{{ employe.anciennete|pluralize:"s" }} d'expérience
+                        </span>
+                        <span class="badge bg-warning">{{ employe.taux_commission }}% commission</span>
+                        {% if employe.actif %}
+                        <span class="badge bg-info">Actif</span>
+                        {% else %}
+                        <span class="badge bg-danger">Inactif</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="contact-info">
+                        <div class="d-flex flex-wrap gap-4">
+                            <div>
+                                <i class="fas fa-phone me-1 text-muted"></i>
+                                {{ employe.telephone }}
+                            </div>
+                            {% if employe.user.email %}
+                            <div>
+                                <i class="fas fa-envelope me-1 text-muted"></i>
+                                {{ employe.user.email }}
+                            </div>
+                            {% endif %}
+                            <div>
+                                <i class="fas fa-id-card me-1 text-muted"></i>
+                                {{ employe.matricule }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-end">
+                    <div class="h2 text-success mb-1">{{ monthly_stats.chiffre_affaires|floatformat:2 }}€</div>
+                    <div class="small text-muted">CA ce mois</div>
+                    <div class="mt-3">
+                        <a href="{% url 'employe_edit' employe.pk %}" class="btn btn-outline-warning btn-sm">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'rapports:rapport_coiffeur_detail' employe.pk %}" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-chart-line"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card text-center h-100">
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary mx-auto">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <h3 class="stat-value mb-0">{{ monthly_stats.rdv_total|default:0 }}</h3>
+            <p class="text-muted mb-0">RDV ce mois</p>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card text-center h-100">
+            <div class="stat-icon bg-success bg-opacity-10 text-success mx-auto">
+                <i class="fas fa-percentage"></i>
+            </div>
+            <h3 class="stat-value mb-0">{{ monthly_stats.taux_remplissage|default:0|floatformat:1 }}%</h3>
+            <p class="text-muted mb-0">Taux remplissage</p>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card text-center h-100">
+            <div class="stat-icon bg-warning bg-opacity-10 text-warning mx-auto">
+                <i class="fas fa-coins"></i>
+            </div>
+            <h3 class="stat-value mb-0">{{ monthly_stats.commission|default:0|floatformat:2 }}€</h3>
+            <p class="text-muted mb-0">Commission</p>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card text-center h-100">
+            <div class="stat-icon bg-info bg-opacity-10 text-info mx-auto">
+                <i class="fas fa-star"></i>
+            </div>
+            <h3 class="stat-value mb-0">{{ monthly_stats.satisfaction|default:0|floatformat:1 }}/5</h3>
+            <p class="text-muted mb-0">Satisfaction</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    
+    <div class="col-lg-4">
+
+        <div class="stat-card mb-4">
+            <h5 class="mb-4">
+                <i class="fas fa-info-circle me-2 text-primary"></i>
+                Informations personnelles
+            </h5>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <small class="text-muted">Date d'embauche</small>
+                    <div class="fw-bold">{{ employe.date_embauche|date:"d/m/Y" }}</div>
+                </div>
+                
+                {% if employe.date_fin_contrat %}
+                <div class="info-item">
+                    <small class="text-muted">Fin de contrat</small>
+                    <div class="fw-bold">{{ employe.date_fin_contrat|date:"d/m/Y" }}</div>
+                </div>
+                {% endif %}
+                
+                <div class="info-item">
+                    <small class="text-muted">Taux horaire</small>
+                    <div class="fw-bold">{{ employe.taux_horaire }}€/h</div>
+                </div>
+                
+                <div class="info-item">
+                    <small class="text-muted">Commission</small>
+                    <div class="fw-bold text-success">{{ employe.taux_commission }}%</div>
+                </div>
+                
+                <div class="info-item">
+                    <small class="text-muted">Statut</small>
+                    <div>
+                        {% if employe.actif %}
+                        <span class="badge bg-success">Actif</span>
+                        {% else %}
+                        <span class="badge bg-danger">Inactif</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        
+        <div class="stat-card mb-4">
+            <h5 class="mb-4">
+                <i class="fas fa-clock me-2 text-warning"></i>
+                Disponibilités
+            </h5>
+            
+            <div class="schedule-info">
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Horaires</small>
+                    <div class="fw-bold">
+                        {{ employe.heure_debut|time:"H:i" }} - {{ employe.heure_fin|time:"H:i" }}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Jours de travail</small>
+                    <div class="days-badges">
+                        {% for day in employe.jours_travail_list %}
+                        <span class="badge bg-primary me-1 mb-1">{{ day }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <small class="text-muted d-block mb-1">Disponible aujourd'hui</small>
+                    <div>
+                        {% if employe.est_disponible %}
+                        <span class="badge bg-success">Oui</span>
+                        {% else %}
+                        <span class="badge bg-danger">Non</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if employe.contact_urgence or employe.telephone_urgence %}
+        <div class="stat-card">
+            <h5 class="mb-4">
+                <i class="fas fa-phone-alt me-2 text-danger"></i>
+                Contact d'urgence
+            </h5>
+            
+            <div class="emergency-info">
+                {% if employe.contact_urgence %}
+                <div class="mb-2">
+                    <small class="text-muted">Contact</small>
+                    <div class="fw-bold">{{ employe.contact_urgence }}</div>
+                </div>
+                {% endif %}
+                
+                {% if employe.telephone_urgence %}
+                <div>
+                    <small class="text-muted">Téléphone</small>
+                    <div class="fw-bold">{{ employe.telephone_urgence }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+
+    <div class="col-lg-8">
+        
+        <div class="stat-card mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2 text-success"></i>
+                    Performance mensuelle
+                </h5>
+                <select class="form-select form-select-sm" style="width: auto;" id="monthSelect">
+                    <option value="1">Janvier</option>
+                    <option value="2">Février</option>
+                    <option value="3">Mars</option>
+                    <option value="4" selected>Avril</option>
+                    <option value="5">Mai</option>
+                    <option value="6">Juin</option>
+                </select>
+            </div>
+            
+            <div style="height: 250px;">
+                <canvas id="performanceChart"></canvas>
+            </div>
+        </div>
+        
+    
+        <div class="stat-card mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-day me-2 text-primary"></i>
+                    Rendez-vous récents
+                </h5>
+                <a href="{% url 'rendezvous_list' %}?employe={{ employe.pk }}" class="btn btn-sm btn-outline-primary">
+                    Voir tous
+                </a>
+            </div>
+            
+            {% if recent_rdv %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Client</th>
+                            <th>Service</th>
+                            <th>Montant</th>
+                            <th>Satisfaction</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rdv in recent_rdv %}
+                        <tr>
+                            <td>
+                                <div class="small">{{ rdv.date_heure|date:"d/m/Y" }}</div>
+                                <div class="small text-muted">{{ rdv.date_heure|time:"H:i" }}</div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm me-2">
+                                        <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" 
+                                             style="width: 24px; height: 24px;">
+                                            <i class="fas fa-user text-primary small"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">{{ rdv.client.nom_complet }}</div>
+                                        <div class="small text-muted">{{ rdv.client.telephone }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge" 
+                                      style="background-color: {{ rdv.service.couleur|default:'#8A2BE2' }}20; 
+                                             color: {{ rdv.service.couleur|default:'#8A2BE2' }};">
+                                    {{ rdv.service.nom }}
+                                </span>
+                            </td>
+                            <td>
+                                <strong>{{ rdv.montant }}€</strong>
+                            </td>
+                            <td>
+                                {% if rdv.satisfaction %}
+                                <div class="stars small">
+                                    {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= rdv.satisfaction %}
+                                    <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                    <i class="far fa-star text-muted"></i>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'rendezvous_detail' rdv.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-calendar-times fa-2x text-muted mb-2"></i>
+                <p class="text-muted">Aucun rendez-vous récent</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        
+        <div class="stat-card">
+            <h5 class="mb-4">
+                <i class="fas fa-spa me-2 text-info"></i>
+                Services les plus réalisés
+            </h5>
+            
+            <div class="services-list">
+                {% for service in top_services %}
+                <div class="service-item mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="d-flex align-items-center">
+                            <div class="service-color me-2" 
+                                 style="background-color: {{ service.couleur|default:'#8A2BE2' }};
+                                        width: 10px; height: 30px; border-radius: 5px;"></div>
+                            <div>
+                                <div class="fw-bold">{{ service.nom }}</div>
+                                <div class="small text-muted">{{ service.count }} prestation{{ service.count|pluralize:"s" }}</div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold">{{ service.total|floatformat:2 }}€</div>
+                            <div class="small text-muted">CA généré</div>
+                        </div>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar" 
+                             style="width: {{ service.percentage }}%;"
+                                    background-color: {{ service.couleur|default:'#8A2BE2' }};"></div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-4">
+                    <i class="fas fa-spa fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">Aucun service réalisé ce mois</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-xxl {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .info-item {
+        padding: 0.75rem;
+        background-color: rgba(0, 0, 0, 0.02);
+        border-radius: 8px;
+    }
+    
+    .days-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .emergency-info {
+        padding: 1rem;
+        background-color: rgba(220, 53, 69, 0.05);
+        border-radius: 8px;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .stars {
+        white-space: nowrap;
+    }
+    
+    .service-item {
+        padding: 1rem;
+        background-color: rgba(0, 0, 0, 0.02);
+        border-radius: 8px;
+    }
+    
+    .service-color {
+        flex-shrink: 0;
+    }
+</style>
+
+
+<script>
+    // Performance chart
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+            datasets: [
+                {
+                    label: 'Nombre de RDV',
+                    data: [12, 19, 15, 25],
+                    backgroundColor: 'rgba(138, 43, 226, 0.7)',
+                    borderRadius: 5,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'CA généré (€)',
+                    data: [850, 1200, 950, 1850],
+                    backgroundColor: 'rgba(255, 159, 67, 0.7)',
+                    borderRadius: 5,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Nombre de RDV'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'CA (€)'
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                }
+            }
+        }
+    });
+    
+    // Month selector
+    document.getElementById('monthSelect').addEventListener('change', function() {
+        const month = this.value;
+        window.location.href = `?month=${month}`;
+    });
+    
+    // Set current month as selected
+    const currentMonth = new Date().getMonth() + 1;
+    document.getElementById('monthSelect').value = currentMonth;
+</script>
+
+
+-->
+
+
+
+
+
+
+
+
+
+
+{% block content %}
+<!-- Profile Header -->
+<!-- <div class="stat-card mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap">
+
+        <div>
+           <h2 class="mb-1">{{ employe.nom_complet }}</h2>
+            <p class="text-muted mb-0">
+                Performance : 
+                <span class="fw-bold">{{ performance_label }}</span>
+                {% if position %}
+                    • Position #{{ position }}
+                {% endif %}
+            </p>
+        </div>
+
+        
+        <form method="get" class="d-flex gap-2">
+            <select name="month" class="form-select">
+                {% for value, label in months %}
+                    <option value="{{ value }}"
+                        {% if value == selected_month %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <select name="year" class="form-select">
+                {% for y in years %}
+                    <option value="{{ y }}"
+                        {% if y == selected_year %}selected{% endif %}>
+                        {{ y }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <button class="btn btn-primary">Filtrer</button>
+        </form>
+
+    </div>
+</div>
+
+
+
+<div class="row mb-4">
+  
+    <div class="col-md-4">
+        <div class="stat-card text-center">
+            <h3 class="text-success">{{ stats.chiffre_affaires|floatformat:0 }} FCFA</h3>
+            <p class="text-muted mb-0">Chiffre d'affaires</p>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="stat-card text-center">
+            <h3>{{ stats.nb_paiements }}</h3>
+            <p class="text-muted mb-0">Nombre de paiements</p>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="stat-card text-center">
+            <h3>{{ stats.nb_services }}</h3>
+            <p class="text-muted mb-0">Services réalisés</p>
+        </div>
+    </div>
+
+</div>
+
+
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center flex-wrap">
+                <div class="avatar-xxl me-4">
+                    {% if employe.photo %}
+                    <img src="{{ employe.photo.url }}" class="rounded-circle w-100 h-100" 
+                         style="object-fit: cover; border: 4px solid {{ employe.couleur_calendrier|default:'#8A2BE2' }};">
+                    {% else %}
+                    <div class="rounded-circle d-flex align-items-center justify-content-center w-100 h-100" 
+                         style="border: 4px solid {{ employe.couleur_calendrier|default:'#8A2BE2' }};
+                                background-color: {{ employe.couleur_calendrier|default:'#8A2BE2' }};">
+                        <i class="fas fa-user-tie fa-3x text-white"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center mb-1">
+                        <h2 class="mb-0 me-3">{{ employe.nom_complet }}</h2>
+                        <span class="badge bg-soft-primary text-primary">{{ performance_label }}</span>
+                    </div>
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-id-badge me-1"></i> {{ employe.matricule }} | 
+                        <i class="fas fa-medal ms-2 me-1"></i> Rang salon : <strong>#{{ position }}</strong>
+                    </p>
+                    
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <span class="badge bg-primary">{{ employe.type_contrat }}</span>
+                        <span class="badge bg-warning">{{ employe.taux_commission }}% commission</span>
+                        {% if employe.actif %}
+                        <span class="badge bg-success">Actif</span>
+                        {% else %}
+                        <span class="badge bg-danger">Inactif</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="text-end ms-auto">
+                    <form method="get" class="d-flex gap-2 mb-3">
+                        <select name="month" class="form-select form-select-sm">
+                            {% for m_num, m_name in months %}
+                                <option value="{{ m_num }}" {% if m_num == selected_month %}selected{% endif %}>{{ m_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <select name="year" class="form-select form-select-sm">
+                            {% for y in years %}
+                                <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm px-3">Filtrer</button>
+                    </form>
+                    
+                    <div class="h2 text-success mb-1">{{ stats.chiffre_affaires|floatformat:2 }} €</div>
+                    <div class="small text-muted">CA sur la période</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="stat-card text-center h-100">
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary mx-auto mb-3">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <h3 class="stat-value mb-0">{{ stats.nb_paiements }}</h3>
+            <p class="text-muted mb-0">Tickets encaissés</p>
+        </div>
+    </div>
+    
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="stat-card text-center h-100">
+            <div class="stat-icon bg-success bg-opacity-10 text-success mx-auto mb-3">
+                <i class="fas fa-cut"></i>
+            </div>
+            <h3 class="stat-value mb-0">{{ stats.nb_services }}</h3>
+            <p class="text-muted mb-0">Total services réalisés</p>
+        </div>
+    </div>
+    
+    <div class="col-xl-4 col-md-12 mb-4">
+        <div class="stat-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted">Objectif mensuel</span>
+                <span class="fw-bold">{{ progression }}%</span>
+            </div>
+            <div class="progress mb-3" style="height: 12px;">
+                <div class="progress-bar {% if progression > 80 %}bg-success{% elif progression > 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                     role="progressbar" style="width: {{ progression }}%"></div>
+            </div>
+            <p class="small text-muted mb-0 text-center">Basé sur un objectif de {{ objectif }} FCFA/€</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="stat-card mb-4">
+            <h5 class="mb-4">
+                <i class="fas fa-chart-line me-2 text-primary"></i>
+                Performance (6 derniers mois)
+            </h5>
+            <div style="height: 350px;">
+                <canvas id="evolutionChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <h5 class="mb-4">
+                <i class="fas fa-trophy me-2 text-warning"></i>
+                Top 5 Services les plus rentables
+            </h5>
+            <div class="services-list">
+                {% for service in services_stats %}
+                <div class="service-item mb-3 p-3 bg-light rounded shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="fw-bold">{{ service.services__nom }}</div>
+                        <div class="text-success fw-bold">{{ service.total|floatformat:2 }} €</div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center small text-muted mb-1">
+                        <span>{{ service.count }} fois réalisé</span>
+                        <span>Rentabilité relative</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-info" style="width: {{ service.percentage }}%;"></div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-center text-muted py-4">Aucune donnée de service pour ce mois.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="stat-card mb-4">
+            <h5 class="mb-4">Informations</h5>
+            <div class="info-list">
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                    <span class="text-muted">Période :</span>
+                    <span class="fw-bold">{{ month_start|date:"d/m" }} au {{ month_end|date:"d/m/Y" }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                    <span class="text-muted">Taux Horaire :</span>
+                    <span class="fw-bold">{{ employe.taux_horaire }} €/h</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                    <span class="text-muted">Date Embauche :</span>
+                    <span class="fw-bold">{{ employe.date_embauche|date:"d/m/Y" }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                    <span class="text-muted">Contact :</span>
+                    <span class="fw-bold">{{ employe.telephone }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <h5 class="mb-4">Classement Salon</h5>
+            <div class="list-group list-group-flush">
+                {% for item in classement %}
+                <div class="list-group-item d-flex justify-content-between align-items-center px-0 {% if item.employe__id == employe.id %}bg-soft-success fw-bold{% endif %}">
+                    <div>
+                        <span class="me-2 text-muted">#{{ forloop.counter }}</span>
+                        {{ item.employe__nom }}
+                    </div>
+                    <span>{{ item.total|floatformat:0 }} €</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-xxl { width: 100px; height: 100px; }
+    .stat-card { background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); margin-bottom: 1rem; }
+    .stat-icon { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 1.5rem; }
+    .bg-soft-primary { background-color: rgba(13, 110, 253, 0.1); }
+    .bg-soft-success { background-color: rgba(25, 135, 84, 0.1); }
+</style>
+
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const evolutionData = {{ evolution_json|safe }};
+    
+    const ctx = document.getElementById('evolutionChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: evolutionData.map(d => d.mois),
+            datasets: [
+                {
+                    label: 'CA {{ employe.nom_complet }}',
+                    data: evolutionData.map(d => d.employe),
+                    borderColor: "{{ employe.couleur_calendrier|default:'#8A2BE2' }}",
+                    backgroundColor: 'transparent',
+                    tension: 0.3,
+                    fill: false,
+                    borderWidth: 3
+                },
+                {
+                    label: 'Moyenne Salon',
+                    data: evolutionData.map(d => d.moyenne),
+                    borderColor: '#cbd5e0',
+                    borderDash: [5, 5],
+                    backgroundColor: 'transparent',
+                    tension: 0.3,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+</script>
+-->
+
+
+
+
+
+
+
+
+<div class="stat-card mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{% url 'employes_list' %}">Employés</a></li>
+                    <li class="breadcrumb-item active">Rapport détaillé</li>
+                </ol>
+            </nav>
+            <h2 class="mb-0">{{ employe.nom_complet }}</h2>
+        </div>
+
+        <form method="get" class="d-flex gap-2">
+            <select name="month" class="form-select border-primary-subtle">
+                {% for value, label in months %}
+                    <option value="{{ value }}" {% if value == selected_month %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <select name="year" class="form-select border-primary-subtle">
+                {% for y in years %}
+                    <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+            <button class="btn btn-primary px-4">
+                <i class="fas fa-filter me-1"></i> Filtrer
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="stat-card text-center border-bottom border-primary border-4">
+            <h3 class="text-primary fw-bold">{{ stats.chiffre_affaires|floatformat:0 }} FCFA</h3>
+            <p class="text-muted mb-0">Chiffre d'Affaires Généré</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card text-center border-bottom border-success border-4">
+            <h3 class="text-success fw-bold">{{ stats.total_revenu_employe|floatformat:0 }} FCFA</h3>
+            <p class="text-muted mb-0">Rémunération (Fixe + Bonus)</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card text-center border-bottom border-warning border-4">
+            <h3 class="text-warning fw-bold">{{ stats.bonus_calcule|floatformat:0 }} FCFA</h3>
+            <p class="text-muted mb-0">Bonus Performance</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="stat-card mb-4">
+            <div class="d-flex align-items-center mb-4">
+                <div class="avatar-xxl me-4 shadow-sm">
+                    {% if employe.photo %}
+                    <img src="{{ employe.photo.url }}" class="rounded-circle w-100 h-100" 
+                         style="object-fit: cover; border: 4px solid {{ employe.couleur_calendrier|default:'#8A2BE2' }};">
+                    {% else %}
+                    <div class="rounded-circle d-flex align-items-center justify-content-center w-100 h-100 text-white" 
+                         style="background-color: {{ employe.couleur_calendrier|default:'#8A2BE2' }}; border: 4px solid #fff;">
+                        <i class="fas fa-user-tie fa-3x"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div>
+                    <div class="d-flex align-items-center mb-1">
+                        <h2 class="mb-0 me-3">{{ employe.nom_complet }}</h2>
+                        <span class="badge bg-soft-primary text-primary border border-primary-subtle">{{ performance_label }}</span>
+                    </div>
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-id-badge me-1"></i> {{ employe.matricule|default:"Sans Matricule" }} | 
+                        <i class="fas fa-medal ms-2 me-1"></i> Rang salon : <strong>#{{ position }}</strong>
+                    </p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-primary">{{ employe.type_contrat }}</span>
+                        <span class="badge bg-info">Salaire Fixe: {{ employe.salaire_base|floatformat:0 }} FCFA</span>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <h5 class="mb-4 mt-4">
+                <i class="fas fa-chart-line me-2 text-primary"></i>
+                Performance (6 derniers mois)
+            </h5>
+            <div style="height: 300px;">
+                <canvas id="evolutionChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <h5 class="mb-4">
+                <i class="fas fa-trophy me-2 text-warning"></i>
+                Prestations les plus réalisées
+            </h5>
+            <div class="services-list">
+                {% for service in services_stats %}
+                <div class="service-item mb-3 p-3 bg-light rounded border-start border-primary border-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="fw-bold">{{ service.services__nom }}</div>
+                        <div class="text-primary fw-bold">{{ service.total|floatformat:0 }} FCFA</div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center small text-muted mb-1">
+                        <span>{{ service.count }} fois réalisé</span>
+                        <span>Part du CA : {{ service.percentage }}%</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-primary" style="width: {{ service.percentage }}%;"></div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-5">
+                    <i class="fas fa-scissors fa-3x text-light mb-3"></i>
+                    <p class="text-muted">Aucun service enregistré pour cette période.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="stat-card mb-4">
+            <h5 class="mb-3">Objectif de CA</h5>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted">Progression</span>
+                <span class="fw-bold">{{ progression }}%</span>
+            </div>
+            <div class="progress mb-3" style="height: 12px; border-radius: 10px;">
+                <div class="progress-bar {% if progression >= 100 %}bg-success{% elif progression > 50 %}bg-primary{% else %}bg-danger{% endif %} progress-bar-striped progress-bar-animated" 
+                     role="progressbar" style="width: {{ progression }}%"></div>
+            </div>
+            <p class="small text-muted mb-0 text-center">
+                Cible : <strong>{{ objectif|floatformat:0 }} FCFA</strong>
+            </p>
+        </div>
+
+        <div class="stat-card mb-4">
+            <h5 class="mb-4">Informations Contrat</h5>
+            <div class="info-list">
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                    <span class="text-muted">Date Embauche :</span>
+                    <span class="fw-bold">{{ employe.date_embauche|date:"d/m/Y" }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                    <span class="text-muted">Ancienneté :</span>
+                    <span class="fw-bold">{{ employe.anciennete }} an(s)</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                    <span class="text-muted">Spécialité :</span>
+                    <span class="fw-bold text-primary">{{ employe.specialite|default:"Polyvalent" }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">Contact :</span>
+                    <span class="fw-bold">{{ employe.telephone|default:"N/A" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <h5 class="mb-4">Classement du Mois</h5>
+            <div class="list-group list-group-flush">
+                {% for item in classement %}
+                <div class="list-group-item d-flex justify-content-between align-items-center px-0 {% if item.employe__id == employe.id %}bg-soft-primary fw-bold px-2 rounded{% endif %}">
+                    <div>
+                        <span class="me-2 {% if forloop.counter <= 3 %}text-warning{% else %}text-muted{% endif %}">
+                            {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}#{{ forloop.counter }}{% endif %}
+                        </span>
+                        {{ item.employe__user__first_name }}
+                    </div>
+                    <span class="badge bg-light text-dark border">{{ item.total|floatformat:0 }} FCFA</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-xxl { width: 110px; height: 110px; }
+    .stat-card { background: #fff; padding: 1.5rem; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; }
+    .bg-soft-primary { background-color: rgba(138, 43, 226, 0.08); }
+    .text-primary { color: #8A2BE2 !important; }
+    .btn-primary { background-color: #8A2BE2; border-color: #8A2BE2; }
+    .progress-bar.bg-primary { background-color: #8A2BE2 !important; }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const evolutionData = {{ evolution_json|safe }};
+    const ctx = document.getElementById('evolutionChart').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: evolutionData.map(d => d.mois),
+            datasets: [
+                {
+                    label: 'CA de {{ employe.user.first_name }}',
+                    data: evolutionData.map(d => d.employe),
+                    borderColor: "#8A2BE2",
+                    backgroundColor: 'rgba(138, 43, 226, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: "#fff"
+                },
+                {
+                    label: 'Moyenne Salon',
+                    data: evolutionData.map(d => d.moyenne),
+                    borderColor: '#cbd5e0',
+                    borderDash: [5, 5],
+                    tension: 0.4,
+                    fill: false,
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } },
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    ticks: { callback: value => value.toLocaleString() + ' F' }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Rendez-vous #{{ rdv.code }}{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-calendar-alt me-2"></i>Rendez-vous #{{ rdv.code }}
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+<li class="breadcrumb-item"><a href="{% url 'historique_paiement' %}">Historique Des Vente</a></li>
+<li class="breadcrumb-item active">#{{ rdv.code }}</li>
+{% endblock %}
+
+
+{% block content %}
+
+
+
+<div class="container my-4">
+
+    <!-- ========================================== -->
+    <!--   BANDEAU DE GESTION COMPTABLE & SÉCURITÉ  -->
+    <!-- ========================================== -->
+    <div class="card p-4 shadow no-print mb-4 border-start border-4 {% if recu_info.demande_suppression %}border-danger bg-light-danger{% else %}border-warning{% endif %}">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <h4 class="mb-0 fw-bold text-dark">Gestion de la vente</h4>
+                    {% if recu_info.demande_suppression %}
+                        <span class="badge bg-danger animate__animated animate__pulse animate__infinite">🚨 Signalé pour suppression</span>
+                    {% endif %}
+                </div>
+                <small class="text-muted d-block mt-1">ID Groupe : <code class="text-dark fw-semibold">{{ recu_info.numero_groupe }}</code></small>
+            </div>
+            
+            <div class="d-flex flex-wrap gap-2">
+                
+                {% if dans_les_temps %}
+                    {% if recu_info.user == request.user %}
+                        <a href="{% url 'paiement' groupe_id=recu_info.numero_groupe %}" class="btn btn-warning fw-bold d-inline-flex align-items-center shadow-sm">
+                            ⚙️ Modifier / Réassigner
+                        </a>
+                    {% else %}
+                        <button class="btn btn-secondary opacity-50" disabled title="Seul l'auteur de cette vente peut la modifier">
+                            🔒 Modification réservée à l'auteur
+                        </button>
+                    {% endif %}
+                {% else %}
+                    <button class="btn btn-secondary opacity-50" disabled title="Le délai de 30 minutes est dépassé. Modification impossible.">
+                        ⏳ Modification verrouillée (Dépassé)
+                    </button>
+                {% endif %}
+
+
+                {% if dans_les_temps %}
+                    {% if recu_info.user == request.user %}
+                        <form action="{% url 'paiement_delete' groupe_id=recu_info.numero_groupe %}" method="POST" 
+                            onsubmit="return confirm('Attention ! Cette action annulera définitivement tous les paiements et commissions liés à ce groupe. Continuer ?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger shadow-sm fw-bold">🗑️ Annuler la vente</button>
+                        </form>
+                    {% else %}
+                        <span class="text-muted small align-self-center font-italic">⏳ Seul l'auteur ({{ recu_info.user.first_name }}) peut annuler (Reste < 30 min)</span>
+                    {% endif %}
+
+                {% else %}
+                    {% if request.user.is_superuser or "Gérant" in request.user.groups.all|join:"," %}
+                        {% if recu_info.demande_suppression %}
+                            <form action="{% url 'paiement_delete' groupe_id=recu_info.numero_groupe %}" method="POST" 
+                                onsubmit="return confirm('Confirmation Gérant : Êtes-vous sûr de vouloir valider la suppression définitive de cette vente signalée ?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger shadow-sm fw-bold">🔥 Valider la suppression</button>
+                            </form>
+                        {% else %}
+                            <button class="btn btn-secondary text-white opacity-75" disabled title="Cette vente n'a pas été signalée par le manager">
+                                🔒 Non signalé pour suppression
+                            </button>
+                        {% endif %}
+                    {% else %}
+                        {% if not recu_info.demande_suppression and recu_info.user == request.user %}
+                            <form action="{% url 'signaler_paiement' groupe_id=recu_info.numero_groupe %}" method="POST">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger fw-bold shadow-sm">
+                                    🚨 Signaler au Gérant pour suppression
+                                </button>
+                            </form>
+                        {% elif recu_info.demande_suppression %}
+                            <button class="btn btn-outline-secondary" disabled>
+                                ⏳ En attente de validation par le Gérant
+                            </button>
+                        {% else %}
+                            <span class="text-muted small align-self-center font-italic">🔒 Délai dépassé. Seul l'auteur peut le signaler au gérant.</span>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!--       ZONE DU TICKET DE CAISSE (80MM)      -->
+    <!-- ========================================== -->
+    <div class="container mt-2 mb-5">
+        <div id="globalReceipt" class="card p-4 shadow mb-5 printable-area mx-auto" style="max-width: 500px; border-radius: 0;">
+            
+            <!-- Entête du Ticket -->
+            <div class="text-center mb-4">
+                <h2 class="fw-bold mb-0">BEL'R SALON</h2>
+                <p class="mb-0 small">Douala, Cameroun</p>
+                <hr class="ticket-hr">
+                <h4 class="fw-bold mb-0">REÇU CLIENT</h4>
+                <small class="text-muted">N° : <strong>{{ recu_info.numero_recu }}</strong></small>
+            </div>
+
+            <!-- Métadonnées du Ticket -->
+            <div class="mb-3" style="font-size: 0.9rem;">
+                <div class="d-flex justify-content-between">
+                    <strong>Client :</strong> <span>{{ recu_info.nom_client|default:"Client Passage" }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <strong>Date :</strong> <span>{{ recu_info.date|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <strong>Paiement :</strong> <span class="badge bg-dark">{{ recu_info.get_mode_paiement_display }}</span>
+                </div>
+            </div>
+
+            <hr class="ticket-hr">
+
+            <!-- Liste des prestations facturées -->
+            <div class="prestations-list">
+                
+                <!-- 1. Section des Packs Équipe -->
+                {% if packs_groupes %}
+                    {% for pack in packs_groupes %}
+                        <div class="receipt-section mb-3 border-bottom pb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-uppercase" style="font-size: 0.9rem;">📦 {{ pack.nom }}</span>
+                                <span class="fw-bold">{{ pack.prix|floatformat:0 }} FCFA</span>
+                            </div>
+                            
+                            <!-- Détails des collaborateurs et services réalisés au sein du pack -->
+                            <div class="ps-3 no-print">
+                                {% for p_emp in pack.details %}
+                                    <div class="d-flex justify-content-between small text-muted font-italic" style="font-size: 0.75rem;">
+                                       <span>
+                                            <!-- CORRECTION ICI : Les balises de la boucle for sont proprement fermées -->
+                                            {% for s in p_emp.services.all %}
+                                                {{ s.nom }}{% if not forloop.last %}, {% endif %}
+                                            {% endfor %} 
+                                            ({{ p_emp.employe.user.first_name }})
+                                        </span>
+                                        <span>{{ p_emp.total_services|floatformat:0 }} FCFA</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <!-- 2. Section des Services Simples (Hors Packs) -->
+                {% if services_simples %}
+                    {% for s in services_simples %}
+                        <div class="receipt-section mb-2 border-bottom pb-1">
+                            <div class="d-flex justify-content-between align-items-start" style="font-size: 0.9rem;">
+                                <div>
+                                    <small class="text-muted d-block" style="font-size: 0.7rem;">👤 {{ s.employe.user.first_name }} {{ s.employe.user.last_name }}</small>
+                                    {% for serv in s.services.all %}
+                                        <span>{{ serv.nom }}</span>{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <span class="fw-bold">{{ s.total_services|floatformat:0 }} FCFA</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <!-- Double ligne pour le total financier -->
+            <hr class="ticket-hr" style="border-top: 2px solid #000 !important;">
+
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <h4 class="fw-bold mb-0">TOTAL :</h4>
+                <h3 class="fw-bold text-success mb-0" id="globalTotalDisplay">{{ recu_info.total_global|floatformat:0 }} FCFA</h3>
+            </div>
+
+            <!-- Boutons d'actions bas de page (Masqués à l'impression) -->
+            <div class="text-center mt-5 no-print">
+                <button id="printGlobalReceipt" class="btn btn-dark btn-lg w-100 shadow-sm mb-2">
+                    🖨️ IMPRIMER LE TICKET
+                </button>
+                <a href="{% url 'paiement' %}" class="btn btn-outline-secondary w-100">
+                    ➕ Nouvelle Vente
+                </a>
+            </div>
+            
+            <!-- Message de courtoisie (Uniquement visible sur le ticket papier) -->
+            <div class="text-center mt-4 only-print">
+                <small>Merci de votre visite chez BEL'R !</small><br>
+                <small>À bientôt.</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!--             STYLES CSS DÉDIÉS              -->
+<!-- ========================================== -->
+<style>
+    /* Styles pour l'écran de contrôle */
+    .only-print { display: none; }
+    .ticket-hr { border-top: 1px dashed #ccc; opacity: 1; margin: 8px 0; }
+    .bg-light-danger { background-color: #ffebee !important; }
+    .font-italic { font-style: italic; }
+
+    /* Configuration responsive et gestion de la feuille d'impression thermique */
+    @media print {
+        @page { 
+            margin: 0; 
+            size: 80mm auto; 
+        }
+        body * { 
+            visibility: hidden; 
+        }
+        .printable-area, .printable-area * { 
+            visibility: visible; 
+        }
+        .printable-area {
+            position: absolute;
+            left: 0; 
+            top: 0;
+            width: 80mm !important;
+            max-width: 80mm !important;
+            padding: 4mm 2mm !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+            font-family: 'Courier New', Courier, monospace;
+            background: #fff !important;
+            color: #000 !important;
+        }
+        .no-print { 
+            display: none !important; 
+        }
+        .only-print { 
+            display: block !important; 
+        }
+        .ticket-hr { 
+            border-top: 1px dashed #000 !important; 
+            opacity: 1 !important; 
+            margin: 6px 0; 
+        }
+        .text-success { 
+            color: #000 !important; 
+        }
+        .badge { 
+            border: 1px solid #000; 
+            color: #000 !important; 
+            background: transparent !important; 
+        }
+        h2 { font-size: 1.3rem !important; font-weight: bold; }
+        h4 { font-size: 1.05rem !important; }
+        h3 { font-size: 1.2rem !important; font-weight: bold; }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // Gestionnaire d'impression natif
+    const printBtn = document.getElementById("printGlobalReceipt");
+    if (printBtn) {
+        printBtn.addEventListener("click", function() {
+            window.print();
+        });
+    }
+
+    // Script d'édition rapide et de recalcul dynamique en dev
+    const editGlobalBtn = document.getElementById("editGlobalBtn");
+    if (editGlobalBtn) {
+        editGlobalBtn.addEventListener("click", function() {
+            const isEditing = this.dataset.editing === "false";
+            this.dataset.editing = isEditing ? "true" : "false";
+            const editables = document.querySelectorAll(".total-val");
+
+            if (isEditing) {
+                editables.forEach(el => el.setAttribute("contenteditable", "true"));
+                this.innerHTML = "💾 Sauvegarder";
+                this.className = "btn btn-sm btn-success";
+            } else {
+                editables.forEach(el => {
+                    el.setAttribute("contenteditable", "false");
+                    saveToServer(el.dataset.id, el.textContent.replace(/\s/g, ''));
+                });
+                this.innerHTML = "✏️ Mode Édition Rapide";
+                this.className = "btn btn-sm btn-outline-primary";
+                recalculateGlobal();
+            }
+        });
+    }
+
+    function recalculateGlobal() {
+        let total = 0;
+        document.querySelectorAll(".total-val").forEach(el => {
+            total += parseFloat(el.textContent.replace(/\s/g, '')) || 0;
+        });
+        const totalDisplay = document.getElementById("globalTotalDisplay");
+        if (totalDisplay) {
+            totalDisplay.textContent = total.toLocaleString() + " FCFA";
+        }
+    }
+
+    async function saveToServer(id, total) {
+        try {
+            await fetch('/paiements/update-amount/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ id: id, total: total })
+            });
+        } catch (error) {
+            console.error("Erreur de synchronisation serveur:", error);
+        }
+    }
+});
+
+// Callback post-impression pour fluidifier le travail en caisse au salon
+window.onafterprint = function() {
+    if (confirm("Ticket imprimé ! Voulez-vous passer directement à la vente suivante ?")) {
+        window.location.href = "{% url 'paiement' %}";
+    }
+};
+</script>
+{% endblock %}

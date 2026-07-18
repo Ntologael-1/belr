@@ -1,0 +1,308 @@
+{% extends 'base.html' %}
+
+{% block title %}Rapport Coiffeur - {{ employe.nom_complet }}{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-user-tie me-2"></i>Rapport Coiffeur
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Accueil</a></li>
+<li class="breadcrumb-item"><a href="{% url 'rapport_global' %}">Rapports</a></li>
+<li class="breadcrumb-item active">{{ employe.nom_complet }}</li>
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Design Premium & Soft */
+    .bg-success-soft { background-color: rgba(25, 135, 84, 0.1); border: 1px solid rgba(25, 135, 84, 0.2); }
+    .bg-info-soft { background-color: rgba(13, 202, 240, 0.1); border: 1px solid rgba(13, 202, 240, 0.2); }
+    .stat-card { border-radius: 15px; background: #fff; transition: transform 0.2s; }
+    .stat-card:hover { transform: translateY(-3px); }
+    .progress-container { background: #f0f2f5; border-radius: 10px; padding: 3px; }
+</style>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="stat-card p-4 d-flex justify-content-between align-items-center shadow-sm border-0">
+            <div class="d-flex align-items-center">
+                {% if employe.photo %}
+                    <img src="{{ employe.photo.url }}" class="rounded-circle me-3 shadow-sm" style="width: 65px; height: 65px; object-fit: cover; border: 3px solid #f8f9fa;">
+                {% else %}
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 65px; height: 65px;">
+                        <span class="h3 mb-0">{{ employe.user.first_name|slice:":1" }}</span>
+                    </div>
+                {% endif %}
+                <div>
+                    <h3 class="mb-1 fw-bold text-dark">{{ employe.user.get_full_name }}</h3>
+                    <div class="d-flex gap-2 align-items-center">
+                        <span class="badge rounded-pill bg-light text-primary border border-primary-subtle">
+                            {{ employe.specialite|default:"Coiffeur" }}
+                        </span>
+                        <span class="badge rounded-pill {% if performance_label == 'Élite' %}bg-warning text-dark{% else %}bg-success text-white{% endif %}">
+                            <i class="fas fa-medal me-1"></i> {{ performance_label }}
+                        </span>
+                        <span class="text-muted small"><i class="fas fa-trophy text-warning me-1"></i> Rang #{{ position }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="text-end">
+                <form method="get" class="d-flex gap-2">
+                    <select name="month" class="form-select form-select-sm border-0 bg-light rounded-3" onchange="this.form.submit()">
+                        {% for num, name in months %}
+                            <option value="{{ num }}" {% if num == selected_month %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="year" class="form-select form-select-sm border-0 bg-light rounded-3" onchange="this.form.submit()">
+                        {% for y in years %}
+                            <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="stat-card p-4 shadow-sm border-0">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h6 class="fw-bold mb-1 text-uppercase small text-muted">Progression des objectifs</h6>
+                    <div class="d-flex align-items-center">
+                        <span class="text-muted small">Mon CA Actuel : </span>
+                        <span class="h5 mb-0 fw-bold ms-2 text-primary">{{ stats.chiffre_affaires|floatformat:0 }} FCFA</span>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-dark-subtle text-dark px-3 py-2" style="border-radius: 8px;">
+                        Statut : <strong>{{ performance_label }}</strong>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Calculs d'évolution en JavaScript pour éviter d'alourdir le backend Django -->
+            <!-- Barre de Progression : Palier 1 -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small fw-semibold text-secondary">
+                        Palier 1 ({{ employe.palier_1_percent }}% de bonus)
+                    </span>
+                    <span class="small text-muted fw-bold">
+                        Cible : {{ p1_ca|floatformat:0 }} FCFA
+                    </span>
+                </div>
+                <div class="progress-container">
+                    <div class="progress" style="height: 12px; border-radius: 8px;">
+                        <div id="barre-p1" class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Barre de Progression : Palier 2 -->
+            <div class="mb-2">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small fw-semibold text-secondary">
+                        Palier 2 / Élite ({{ employe.palier_2_percent }}% de bonus)
+                    </span>
+                    <span class="small text-muted fw-bold">
+                        Cible : {{ p2_ca|floatformat:0 }} FCFA
+                    </span>
+                </div>
+                <div class="progress-container">
+                    <div class="progress" style="height: 12px; border-radius: 8px;">
+                        <div id="barre-p2" class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center mt-4 p-3 rounded-3 {% if stats.chiffre_affaires >= p2_ca %}bg-success-soft{% else %}bg-light-subtle border{% endif %}">
+                <div class="flex-shrink-0">
+                    {% if stats.chiffre_affaires < p1_ca %}
+                        <div class="p-2 bg-primary-subtle rounded-circle"><i class="fas fa-bullseye text-primary"></i></div>
+                    {% elif stats.chiffre_affaires < p2_ca %}
+                        <div class="p-2 bg-info-subtle rounded-circle"><i class="fas fa-rocket text-info"></i></div>
+                    {% else %}
+                        <div class="p-2 bg-warning-subtle rounded-circle"><i class="fas fa-crown text-warning"></i></div>
+                    {% endif %}
+                </div>
+                <div class="ms-3">
+                    <p class="mb-0 small text-dark">
+                        {% if stats.chiffre_affaires < p1_ca %}
+                            Encore <span class="fw-bold text-primary">{{ stats.reste_p1|floatformat:0 }} FCFA</span> pour passer à <strong>{{ employe.palier_1_percent }}%</strong> de bonus (Objectif : {{ p1_ca|floatformat:0 }} FCFA).
+                        {% elif stats.chiffre_affaires < p2_ca %}
+                            <span class="text-success fw-bold"><i class="fas fa-check-circle"></i> Palier 1 validé ({{ employe.palier_1_percent }}%) !</span> 
+                            Plus que <span class="fw-bold text-info">{{ stats.reste_p2|floatformat:0 }} FCFA</span> pour le bonus <strong>{{ employe.palier_2_percent }}% (Élite à {{ p2_ca|floatformat:0 }} FCFA)</strong>.
+                        {% else %}
+                            <span class="text-success fw-bold"><i class="fas fa-star text-warning"></i> Performance Élite !</span> Bonus maximum de <strong>{{ employe.palier_2_percent }}%</strong> appliqué (Palier de {{ p2_ca|floatformat:0 }} FCFA dépassé).
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3 mb-3">
+        <div class="stat-card text-center p-3 shadow-sm border-0">
+            <p class="text-muted small text-uppercase mb-1">Tickets</p>
+            <h3 class="fw-bold mb-0">{{ stats.nb_paiements }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card text-center p-3 shadow-sm border-0">
+            <p class="text-muted small text-uppercase mb-1">Bonus</p>
+            <h3 class="fw-bold mb-0 text-success">+{{ stats.bonus_calcule|floatformat:0 }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card text-center p-3 shadow-sm border-0">
+            <p class="text-muted small text-uppercase mb-1">Total Net</p>
+            <h3 class="fw-bold mb-0 text-primary">{{ stats.total_revenu_employe|floatformat:0 }}</h3>
+            <div class="text-muted small mt-1" style="font-size: 0.75rem;">
+                Fixe : {{ employe.salaire_base|floatformat:0 }} FCFA
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card text-center p-3 shadow-sm border-0 bg-primary text-white">
+            <p class="text-white-50 small text-uppercase mb-1">Position Salon</p>
+            <h3 class="fw-bold mb-0">#{{ position }}</h3>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-7 mb-4">
+        <div class="stat-card p-4 h-100 shadow-sm border-0">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0">Évolution de performance</h5>
+                <small class="text-muted">Moi vs Moyenne Salon</small>
+            </div>
+            <canvas id="evolutionChart" style="max-height: 250px;"></canvas>
+        </div>
+    </div>
+
+    <div class="col-md-5 mb-4">
+        <div class="stat-card p-4 h-100 shadow-sm border-0">
+            <h5 class="fw-bold mb-4">Top Services & Packs</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle border-0">
+                    <tbody class="border-0">
+                        {% for service in services_stats %}
+                        <tr>
+                            <td class="ps-0 py-3">
+                                <div class="d-flex flex-column">
+                                    <span class="small fw-bold text-dark">{{ service.services__nom }}</span>
+                                    {% if service.provenance_pack__nom %}
+                                        <span class="badge bg-info-soft text-info rounded-pill w-fit" style="font-size: 0.65rem; width: fit-content;">
+                                            <i class="fas fa-box me-1"></i> {{ service.provenance_pack__nom }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark rounded-pill">{{ service.count }}</span>
+                            </td>
+                            <td class="text-end pe-0">
+                                <span class="small fw-bold">{{ service.total|floatformat:0 }}</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-center py-5 text-muted small">Aucun service ce mois</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // --- 📊 CALCUL DYNAMIQUE DU REMPLISSAGE DES BARRES DE PALIER ---
+    const caActuel = parseFloat("{{ stats.chiffre_affaires }}") || 0;
+    const palier1 = parseFloat("{{ p1_ca }}") || 0;
+    const palier2 = parseFloat("{{ p2_ca }}") || 0;
+
+    const divP1 = document.getElementById('barre-p1');
+    const divP2 = document.getElementById('barre-p2');
+
+    // Calcul Palier 1
+    let pctP1 = palier1 > 0 ? (caActuel / palier1) * 100 : 0;
+    if (pctP1 >= 100) {
+        pctP1 = 100;
+        divP1.classList.add('bg-success');
+    } else {
+        divP1.classList.add('bg-primary');
+    }
+    divP1.style.width = pctP1.toFixed(1) + '%';
+    divP1.setAttribute('aria-valuenow', pctP1.toFixed(0));
+
+    // Calcul Palier 2
+    let pctP2 = palier2 > 0 ? (caActuel / palier2) * 100 : 0;
+    if (pctP2 >= 100) {
+        pctP2 = 100;
+        divP2.classList.add('bg-warning', 'text-dark');
+    } else {
+        divP2.classList.add('bg-info');
+    }
+    divP2.style.width = pctP2.toFixed(1) + '%';
+    divP2.setAttribute('aria-valuenow', pctP2.toFixed(0));
+
+
+    // --- 📈 GRAPHIQUE ÉVOLUTION ---
+    const ctx = document.getElementById('evolutionChart').getContext('2d');
+    const rawData = {{ evolution_json|safe }};
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: rawData.map(d => d.mois),
+            datasets: [
+                {
+                    label: 'Mon CA',
+                    data: rawData.map(d => d.employe),
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.08)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    borderWidth: 3
+                },
+                {
+                    label: 'Moyenne Salon',
+                    data: rawData.map(d => d.moyenne),
+                    borderColor: '#ced4da',
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    borderWidth: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { 
+                legend: { 
+                    position: 'bottom',
+                    labels: { usePointStyle: true, boxWidth: 6, font: { size: 11 } }
+                } 
+            },
+            scales: {
+                y: { grid: { color: '#f8f9fa' }, ticks: { font: { size: 10 } } },
+                x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+            }
+        }
+    });
+</script>
+
+{% endblock %}
